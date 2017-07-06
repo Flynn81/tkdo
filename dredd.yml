@@ -1,7 +1,3 @@
-reporter: apiary
-custom:
-  apiaryApiKey: 7068bc58659671982ae9d58bd7f86227
-  apiaryApiName: tkdo
 dry-run: null
 hookfiles: null
 language: go
