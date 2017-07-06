@@ -1,0 +1,54 @@
+FORMAT: 1A
+HOST: http://localhost:8080/
+
+# TKDO
+
+Polls is a simple API allowing consumers to view polls and vote in them.
+
+## Questions Collection [/tasks]
+
+### List All Questions [GET]
+
++ Response 200 (application/json)
+    + Attributes (array[Task])
+
+### Create a New Question [POST]
+
++ Attributes (Task)
+
++ Request (application/json)
+
++ Response 200 (application/json)
+    + Attributes (Task)
+
+## Questions Collection [/tasks/{id}]
+
++ Parameters
+
+    + id: 1 (number) - unique identifier of the task
+
+### Update a task [PUT]
+
++ Attributes (Task)
+
++ Request (application/json)
+
++ Response 201 (application/json)
+    + Attributes (Task)
+
+### Update a task [DELETE]
+
+  + Attributes (Task)
+
+  + Request (application/json)
+
+  + Response 201 (application/json)
+      + Attributes (Task)
+
+# Data Structures
+
+## Task
+
++ name (string) - name of the task
++ type (enum) - type for the task
+    + basic (string)
