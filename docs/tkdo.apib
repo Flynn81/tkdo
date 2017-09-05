@@ -3,29 +3,48 @@ HOST: http://localhost:8080/
 
 # TKDO
 
-Polls is a simple API allowing consumers to view polls and vote in them.
+TKDo is a simple API allowing CRUD operations on tasks.
 
-## Questions Collection [/tasks]
+## List Tasks [/tasks{?page,page_size}]
 
-### List All Questions [GET]
++ Parameters
+    + page: 3 (number, optional) - page number to return, zero indexed
+        + Default: 0
+    + page_size: 25 (number, optional) - maximum number of objects to return
+        + Default: 50
+
+### List Tasks [GET]
+Use to get a list of tasks.
 
 + Response 200 (application/json)
     + Attributes (array[Task])
 
-### Create a New Question [POST]
+## Create A Task [/tasks]
 
-+ Attributes (Task)
+### Create A Task [POST]
 
 + Request (application/json)
 
-+ Response 200 (application/json)
+    + Body
+
+            {
+            "name": "clean the gutters",
+            "type": "basic|recurring"
+            }
+
++ Response 201 (application/json)
     + Attributes (Task)
 
-## Questions Collection [/tasks/{id}]
+## Working with a Task [/tasks/{id}]
 
 + Parameters
 
     + id: 1 (number) - unique identifier of the task
+
+### Get a Task [GET]
+
++ Response 200 (application/json)
+    + Attributes (Task)
 
 ### Update a task [PUT]
 
@@ -33,22 +52,32 @@ Polls is a simple API allowing consumers to view polls and vote in them.
 
 + Request (application/json)
 
-+ Response 201 (application/json)
++ Response 200 (application/json)
     + Attributes (Task)
 
-### Update a task [DELETE]
-
-  + Attributes (Task)
+### Delete a task [DELETE]
 
   + Request (application/json)
 
-  + Response 201 (application/json)
+  + Response 200 (application/json)
       + Attributes (Task)
+
+## Task Search [/tasks/search{?name,type}]
+
++ Parameters
+    + name: 'buy apples' (string, optional) - name of the task
+    + type (enum, optional) - type of the task
+
+### Task Search [GET]
+
++ Response 200 (application/json)
+    + Attributes (array[Task])
 
 # Data Structures
 
 ## Task
 
-+ name (string) - name of the task
-+ type (enum) - type for the task
-    + basic (string)
++ id: 1 (number) - unique identifier of the task
++ name: clean the gutters (string, required) - name of the task
+- type (enum, required)
+    - basic|recurring
