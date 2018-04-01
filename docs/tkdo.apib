@@ -25,12 +25,7 @@ Use to get a list of tasks.
 
 + Request (application/json)
 
-    + Body
-
-            {
-            "name": "clean the gutters",
-            "type": "basic|recurring"
-            }
+    + Attributes (NewTask)
 
 + Response 201 (application/json)
     + Attributes (Task)
@@ -75,9 +70,13 @@ Use to get a list of tasks.
 
 # Data Structures
 
-## Task
+## NewTask
 
-+ id: 1 (number) - unique identifier of the task
 + name: clean the gutters (string, required) - name of the task
 - type (enum, required)
     - basic|recurring
+
+## Task
+
++ id: 1 (number) - unique identifier of the task
++ Include NewTask
