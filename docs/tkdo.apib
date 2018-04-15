@@ -16,7 +16,7 @@ TKDo is a simple API allowing CRUD operations on tasks.
 ### List Tasks [GET]
 Use to get a list of tasks.
 
-+ Response 200 (application/json)
++ Response 200 (application/json; charset=utf-8)
     + Attributes (array[Task])
 
 ## Create A Task [/tasks]
@@ -27,7 +27,7 @@ Use to get a list of tasks.
 
     + Attributes (NewTask)
 
-+ Response 201 (application/json)
++ Response 201 (application/json; charset=utf-8)
     + Attributes (Task)
 
 ## Working with a Task [/tasks/{id}]
@@ -38,7 +38,7 @@ Use to get a list of tasks.
 
 ### Get a Task [GET]
 
-+ Response 200 (application/json)
++ Response 200 (application/jso; charset=utf-8)
     + Attributes (Task)
 
 ### Update a task [PUT]
@@ -47,14 +47,14 @@ Use to get a list of tasks.
 
 + Request (application/json)
 
-+ Response 200 (application/json)
++ Response 200 (application/json; charset=utf-8)
     + Attributes (Task)
 
 ### Delete a task [DELETE]
 
   + Request (application/json)
 
-  + Response 200 (application/json)
+  + Response 200 (application/json; charset=utf-8)
       + Attributes (Task)
 
 ## Task Search [/tasks/search{?name,type}]
@@ -65,7 +65,7 @@ Use to get a list of tasks.
 
 ### Task Search [GET]
 
-+ Response 200 (application/json)
++ Response 200 (application/json; charset=utf-8)
     + Attributes (array[Task])
 
 # Data Structures
