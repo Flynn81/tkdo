@@ -4,4 +4,4 @@ dependencies:
     - npm install -g dredd@4.1.1
 test:
   pre:
-    - dredd
+    - dredd docs/tkdo.apib http://localhost:8080/
