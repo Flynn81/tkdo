@@ -65,7 +65,7 @@ func (ta InMemTaskAccess) Delete(id int) bool {
 
 func (ta InMemTaskAccess) GetMany(keyword string, taskType string) []*Task {
 	fmt.Println("keyword is ", keyword)
-	var r []*Task
+	var r []*Task = []*Task{}
 	for _, t := range tasks {
 		var k, tt = false, false //todo init before for loop
 		if keyword != "" && strings.Contains(t.Name, keyword) {
@@ -95,7 +95,9 @@ func (ta InMemTaskAccess) List(page int, pageSize int) []*Task {
 	}
 	fmt.Println("m is ", m)
 	if tasks != nil {
+		fmt.Println("slice array")
 		return tasks[page*pageSize : m]
 	}
-	return nil
+	fmt.Println("empty array")
+	return []*Task{}
 }

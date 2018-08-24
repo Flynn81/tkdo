@@ -28,6 +28,8 @@ func (sh SearchHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(rw, "error with search: %v", err)
 	}
 
+	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+
 	rw.Write(bytes)
 }
 
@@ -63,6 +65,7 @@ func getTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 		rw.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(rw, "error with get: %v", err)
 	}
+	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 	rw.Write(bytes)
 }
 
@@ -86,6 +89,7 @@ func updateTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 		fmt.Fprintf(rw, "error with update: %v", err)
 	}
 	if b {
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		rw.Write(bytes)
 	} else {
 		fmt.Fprintf(rw, "error with update: %v", err)
@@ -111,6 +115,7 @@ func deleteTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 	if err != nil {
 		fmt.Fprintf(rw, "error with delete: %v", err)
 	}
+	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 	rw.Write(bytes)
 }
 
@@ -122,6 +127,8 @@ func createTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 	if err != nil {
 		fmt.Fprintf(rw, "error with create: %v", err)
 	}
+	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+	rw.WriteHeader(http.StatusCreated)
 	rw.Write(bytes)
 }
 
@@ -154,6 +161,8 @@ func listTasks(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 	if err != nil {
 		fmt.Fprintf(rw, "error with search: %v", err)
 	}
+
+	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	rw.Write(bytes)
 }
