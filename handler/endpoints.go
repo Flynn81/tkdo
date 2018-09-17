@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -10,6 +9,7 @@ import (
 	"github.com/Flynn81/tkdo/model"
 )
 
+//SearchHandler provides handler funcs for search
 type SearchHandler struct {
 	TaskAccess model.TaskAccess
 }
@@ -22,17 +22,22 @@ func (sh SearchHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	tasks := sh.TaskAccess.GetMany(n, t)
 
+	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+
 	bytes, err := json.Marshal(tasks)
 
 	if err != nil {
-		fmt.Fprintf(rw, "error with search: %v", err)
+		http.Error(rw, "error with search", http.StatusInternalServerError)
+		return
 	}
 
-	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-
-	rw.Write(bytes)
+	_, err = rw.Write(bytes)
+	if err != nil {
+		panic(err)
+	}
 }
 
+//TaskHandler provides handler funcs for tasks
 type TaskHandler struct {
 	TaskAccess model.TaskAccess
 }
@@ -50,88 +55,123 @@ func (th TaskHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 func getTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 
 	segments := strings.Split(r.RequestURI, "/")
-	fmt.Printf("%q\n", segments)
+
 	id, err := strconv.Atoi(segments[len(segments)-1])
+
 	if err != nil {
-		fmt.Fprintf(rw, "error with get: %v", err)
+		http.Error(rw, "error with get", http.StatusBadRequest)
+		return
 	}
+
 	t, err := ta.Get(id)
+
 	if err != nil {
-		rw.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(rw, "error with get: %v", err)
+		http.Error(rw, "error with get", http.StatusInternalServerError)
+		return
 	}
+
 	bytes, err := json.Marshal(t)
+
 	if err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(rw, "error with get: %v", err)
+		http.Error(rw, "error with get", http.StatusInternalServerError)
+		return
 	}
+
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-	rw.Write(bytes)
+	rw.WriteHeader(http.StatusOK)
+
+	_, err = rw.Write(bytes)
+
+	if err != nil {
+		panic(err)
+	}
 }
 
 func updateTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 	var t model.Task
-	json.NewDecoder(r.Body).Decode(&t)
+	err := json.NewDecoder(r.Body).Decode(&t)
 
-	if t.Id == 0 {
+	if err != nil {
+		http.Error(rw, "error with update", http.StatusInternalServerError)
+		return
+	}
+
+	if t.ID == 0 {
 		segments := strings.Split(r.RequestURI, "/")
-		fmt.Printf("%q\n", segments)
-		id, err := strconv.Atoi(segments[len(segments)-1])
-		if err != nil {
-			fmt.Fprintf(rw, "error with get: %v", err)
+		id, err2 := strconv.Atoi(segments[len(segments)-1])
+		if err2 != nil {
+			http.Error(rw, "error with update", http.StatusInternalServerError)
+			return
 		}
-		t.Id = id
+		t.ID = id
 	}
 
 	b := ta.Update(&t)
-	bytes, err := json.Marshal(t)
+	var bytes []byte
+	bytes, err = json.Marshal(t)
 	if err != nil {
-		fmt.Fprintf(rw, "error with update: %v", err)
+		http.Error(rw, "error with update", http.StatusInternalServerError)
+		return
 	}
 	if b {
 		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-		rw.Write(bytes)
+		_, err = rw.Write(bytes)
+		if err != nil {
+			panic(err)
+		}
 	} else {
-		fmt.Fprintf(rw, "error with update: %v", err)
+		http.Error(rw, "error with update", http.StatusInternalServerError)
 	}
 }
 
 func deleteTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 	segments := strings.Split(r.RequestURI, "/")
-	fmt.Printf("%q\n", segments)
 	id, err := strconv.Atoi(segments[len(segments)-1])
 	if err != nil {
-		fmt.Fprintf(rw, "error with get: %v", err)
-	}
-	if err != nil {
-		fmt.Fprintf(rw, "error with delete: %v", err)
+		http.Error(rw, "error with delete", http.StatusBadRequest)
+		return
 	}
 	t, err := ta.Get(id)
 	if err != nil {
-		fmt.Fprintf(rw, "error with delete: %v", err)
+		http.Error(rw, "error with delete", http.StatusBadRequest)
+		return
 	}
 	ta.Delete(id)
 	bytes, err := json.Marshal(t)
 	if err != nil {
-		fmt.Fprintf(rw, "error with delete: %v", err)
+		http.Error(rw, "error with delete", http.StatusBadRequest)
+		return
 	}
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
-	rw.Write(bytes)
+	_, err = rw.Write(bytes)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func createTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 	var t model.Task
-	json.NewDecoder(r.Body).Decode(&t)
-	newTask := ta.Create(&t)
-	bytes, err := json.Marshal(newTask)
+	err := json.NewDecoder(r.Body).Decode(&t)
 	if err != nil {
-		fmt.Fprintf(rw, "error with create: %v", err)
+		http.Error(rw, "error with create", http.StatusInternalServerError)
+		return
+	}
+	newTask := ta.Create(&t)
+	var bytes []byte
+	bytes, err = json.Marshal(newTask)
+	if err != nil {
+		http.Error(rw, "error with create", http.StatusInternalServerError)
+		return
 	}
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 	rw.WriteHeader(http.StatusCreated)
-	rw.Write(bytes)
+	_, err = rw.Write(bytes)
+	if err != nil {
+		panic(err)
+	}
 }
 
+//ListHandler is used to handle requests to list or create tasks
 type ListHandler struct {
 	TaskAccess model.TaskAccess
 }
@@ -159,10 +199,14 @@ func listTasks(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 	bytes, err := json.Marshal(tasks)
 
 	if err != nil {
-		fmt.Fprintf(rw, "error with search: %v", err)
+		http.Error(rw, "error with search", http.StatusBadRequest)
+		return
 	}
 
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-	rw.Write(bytes)
+	_, err = rw.Write(bytes)
+	if err != nil {
+		panic(err)
+	}
 }

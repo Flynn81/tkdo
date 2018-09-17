@@ -4,6 +4,8 @@ import (
 	"net/http"
 )
 
+//CheckMethod takes a slice of strings, which should represent the http
+//request methods that the handler will allow.
 func CheckMethod(h http.Handler, methods ...string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		for _, method := range methods {
@@ -16,6 +18,7 @@ func CheckMethod(h http.Handler, methods ...string) http.Handler {
 	})
 }
 
+//CheckHeaders ensures all requests being handled have the correct headers
 func CheckHeaders(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Content-Type") != "application/json; charset=utf-8" {

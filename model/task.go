@@ -2,17 +2,21 @@ package model
 
 import (
 	"fmt"
+	"log"
 	"strings"
+	"sync"
 )
 
 var tasks []*Task
 
+//Task represents the data structure for a task
 type Task struct {
-	Id       int    `json:"id"`
+	ID       int    `json:"id"`
 	Name     string `json:"name"`
 	TaskType string `json:"taskType"`
 }
 
+//TaskAccess functions to work with tasks
 type TaskAccess interface {
 	Get(id int) (*Task, error)
 	Create(t *Task) *Task
@@ -22,50 +26,65 @@ type TaskAccess interface {
 	List(page int, pageSize int) []*Task
 }
 
+//InMemTaskAccess is a concrete struct implementing TaskAccess using
+//an in-memory data store in the form of an array.
 type InMemTaskAccess struct {
+	Mux *sync.Mutex
 }
 
+//Get returns an task given an id.
 func (ta InMemTaskAccess) Get(id int) (*Task, error) {
 	for _, t := range tasks {
-		if t.Id == id {
+		if t.ID == id {
+			fmt.Println("task found")
 			return t, nil
 		}
 	}
 	return nil, fmt.Errorf("task with id %v cannot be found", id)
 }
 
+//Create takes a task without id and persists it.
 func (ta InMemTaskAccess) Create(t *Task) *Task {
+	ta.Mux.Lock()
 	task := Task{len(tasks) + 1, t.Name, t.TaskType}
-	fmt.Printf("task length is %v", len(tasks))
 	tasks = append(tasks, &task)
-	fmt.Printf("task length is %v", len(tasks))
+	ta.Mux.Unlock()
 	return &task
 }
 
+//Update takes a task and attempt to update it
 func (ta InMemTaskAccess) Update(task *Task) bool {
+	ta.Mux.Lock()
 	for _, t := range tasks {
-		if t.Id == task.Id {
+		if t.ID == task.ID {
 			t.Name = task.Name
 			t.TaskType = task.TaskType
+			ta.Mux.Unlock()
 			return true
 		}
 	}
+	ta.Mux.Unlock()
 	return false
 }
 
+//Delete takes an id and attempts to delete the task with the id
 func (ta InMemTaskAccess) Delete(id int) bool {
+	ta.Mux.Lock()
 	for i, t := range tasks {
-		if t.Id == id {
+		if t.ID == id {
 			tasks = append(tasks[:i], tasks[i+1:]...)
+			ta.Mux.Unlock()
 			return true
 		}
 	}
+	ta.Mux.Unlock()
 	return false
 }
 
+//GetMany returns tasks matching the given string and/or task type
 func (ta InMemTaskAccess) GetMany(keyword string, taskType string) []*Task {
 	fmt.Println("keyword is ", keyword)
-	var r []*Task = []*Task{}
+	var r = []*Task{}
 	for _, t := range tasks {
 		var k, tt = false, false //todo init before for loop
 		if keyword != "" && strings.Contains(t.Name, keyword) {
@@ -85,19 +104,19 @@ func (ta InMemTaskAccess) GetMany(keyword string, taskType string) []*Task {
 	return r
 }
 
+//List returns a list of tasks
 func (ta InMemTaskAccess) List(page int, pageSize int) []*Task {
-	fmt.Println("task length is %v", len(tasks))
-	fmt.Println("page size is %v", pageSize)
-	fmt.Println("page is %v", page)
+	log.Printf("task length is %v", len(tasks))
+	log.Printf("page size is %v", pageSize)
+	log.Printf("page is %v", page)
 	m := (page * pageSize) + pageSize
 	if m > len(tasks) {
 		m = len(tasks)
 	}
-	fmt.Println("m is ", m)
+	log.Print("m is ", m)
 	if tasks != nil {
-		fmt.Println("slice array")
 		return tasks[page*pageSize : m]
 	}
-	fmt.Println("empty array")
+	log.Print("empty array")
 	return []*Task{}
 }
