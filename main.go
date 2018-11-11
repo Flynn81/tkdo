@@ -1,27 +1,47 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
-	"sync"
 
 	"github.com/Flynn81/tkdo/handler"
 	"github.com/Flynn81/tkdo/model"
+
+	_ "github.com/lib/pq"
 )
 
+func closeDB(db *sql.DB) {
+	err := db.Close()
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.Println("Server startup")
 
-	inMem := model.InMemTaskAccess{Mux: &sync.Mutex{}}
+	var err2 error
+	db, err2 := sql.Open("postgres",
+		"postgresql://tk@localhost:26257/tkdo?sslmode=disable")
+	if err2 != nil {
+		log.Fatal("error connecting to the database: ", err2)
+	}
+	model.Init(db)
+	defer closeDB(db)
 
-	lh := handler.ListHandler{TaskAccess: inMem}
+	ta := model.CockroachTaskAccess{}
+	//inMem := model.InMemTaskAccess{Mux: &sync.Mutex{}}
+
+	lh := handler.ListHandler{TaskAccess: ta}
 	http.Handle("/tasks", handler.CheckMethod(handler.CheckHeaders(lh), "GET", "POST"))
 
-	th := handler.TaskHandler{TaskAccess: inMem}
+	th := handler.TaskHandler{TaskAccess: ta}
 	http.Handle("/tasks/", handler.CheckMethod(handler.CheckHeaders(th), "GET", "DELETE", "PUT"))
 
-	sh := handler.SearchHandler{TaskAccess: inMem}
+	sh := handler.SearchHandler{TaskAccess: ta}
 	http.Handle("/tasks/search", handler.CheckMethod(handler.CheckHeaders(sh), "GET"))
 
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
@@ -31,7 +51,7 @@ func main() {
 		}
 	})
 
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":7056", nil)
 	if err != nil {
 		panic(err)
 	}

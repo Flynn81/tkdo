@@ -12,12 +12,12 @@
 					"listen": "test",
 					"script": {
 						"id": "eae7a45d-3eff-4d38-8915-a804d3d0a627",
-						"type": "text/javascript",
 						"exec": [
 							"pm.test(\"response is 200\", function() {",
 							"    pm.response.to.have.status(201);",
 							"})"
-						]
+						],
+						"type": "text/javascript"
 					}
 				}
 			],
@@ -34,12 +34,12 @@
 					"raw": "{\n\t\"name\":\"my test first one\",\n\t\"type\":\"basic\"\n}"
 				},
 				"url": {
-					"raw": "http://localhost:8080/tasks",
+					"raw": "http://localhost:7056/tasks",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8080",
+					"port": "7056",
 					"path": [
 						"tasks"
 					]
@@ -48,18 +48,26 @@
 			"response": []
 		},
 		{
-			"name": "Get",
+			"name": "Get List",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
-						"id": "57a93f96-790a-43a8-9b2c-9a5f915596f7",
-						"type": "text/javascript",
+						"id": "a98c1fe0-233e-4d88-b5f2-90114f8a7d1a",
 						"exec": [
 							"pm.test(\"response is 200\", function() {",
 							"    pm.response.to.have.status(200);",
-							"})"
-						]
+							"});",
+							"",
+							"pm.test(\"two tasks returned\", function() {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.length).to.be.above(1)",
+							"})",
+							"",
+							"var jsonData = pm.response.json();",
+							"pm.environment.set(\"task_to_get\", jsonData[jsonData.length-1].id);"
+						],
+						"type": "text/javascript"
 					}
 				}
 			],
@@ -76,12 +84,12 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://localhost:8080/tasks",
+					"raw": "http://localhost:7056/tasks",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8080",
+					"port": "7056",
 					"path": [
 						"tasks"
 					]
@@ -96,12 +104,12 @@
 					"listen": "test",
 					"script": {
 						"id": "e0e1e210-31d1-4d61-be4e-db5ebb93a3ae",
-						"type": "text/javascript",
 						"exec": [
 							"pm.test(\"response is 404\", function() {",
 							"    pm.response.to.have.status(200);",
 							"})"
-						]
+						],
+						"type": "text/javascript"
 					}
 				}
 			],
@@ -118,15 +126,15 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://localhost:8080/tasks/1",
+					"raw": "http://localhost:7056/tasks/{{task_to_get}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8080",
+					"port": "7056",
 					"path": [
 						"tasks",
-						"1"
+						"{{task_to_get}}"
 					]
 				}
 			},
@@ -139,12 +147,12 @@
 					"listen": "test",
 					"script": {
 						"id": "841c980a-0b70-44a2-970c-ca68a8c6f952",
-						"type": "text/javascript",
 						"exec": [
 							"pm.test(\"response is 200\", function() {",
 							"    pm.response.to.have.status(201);",
 							"})"
-						]
+						],
+						"type": "text/javascript"
 					}
 				}
 			],
@@ -161,102 +169,12 @@
 					"raw": "{\n\t\"name\":\"my test 2nd task\",\n\t\"type\":\"basic\"\n}"
 				},
 				"url": {
-					"raw": "http://localhost:8080/tasks",
+					"raw": "http://localhost:7056/tasks",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8080",
-					"path": [
-						"tasks"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get 2nd Task",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "26f3cb24-c525-4de8-be0b-14f57d9d6e81",
-						"type": "text/javascript",
-						"exec": [
-							"pm.test(\"response is 200\", function() {",
-							"    pm.response.to.have.status(200);",
-							"})"
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json; charset=utf-8"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "http://localhost:8080/tasks/2",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"tasks",
-						"2"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Get List",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "a98c1fe0-233e-4d88-b5f2-90114f8a7d1a",
-						"type": "text/javascript",
-						"exec": [
-							"pm.test(\"response is 200\", function() {",
-							"    pm.response.to.have.status(200);",
-							"});",
-							"",
-							"pm.test(\"two tasks returned\", function() {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData.length).to.eql(2);",
-							"})"
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json; charset=utf-8"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "http://localhost:8080/tasks",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
+					"port": "7056",
 					"path": [
 						"tasks"
 					]
@@ -271,7 +189,6 @@
 					"listen": "test",
 					"script": {
 						"id": "4c77338b-b59a-4b9a-928d-a2fce21774e7",
-						"type": "text/javascript",
 						"exec": [
 							"pm.test(\"response is 200\", function() {",
 							"    pm.response.to.have.status(200);",
@@ -281,7 +198,8 @@
 							"    var jsonData = pm.response.json();",
 							"    pm.expect(jsonData.name).to.eql(\"my test update\");",
 							"})"
-						]
+						],
+						"type": "text/javascript"
 					}
 				}
 			],
@@ -298,81 +216,41 @@
 					"raw": "{\n\t\"name\":\"my test update\",\n\t\"type\":\"basic\"\n}"
 				},
 				"url": {
-					"raw": "http://localhost:8080/tasks/1",
+					"raw": "http://localhost:7056/tasks/{{task_to_get}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8080",
+					"port": "7056",
 					"path": [
 						"tasks",
-						"1"
+						"{{task_to_get}}"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "Delete",
+			"name": "Get List Again",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
-						"id": "f085a364-c920-43af-bec4-61be1117976f",
-						"type": "text/javascript",
+						"id": "a98c1fe0-233e-4d88-b5f2-90114f8a7d1a",
 						"exec": [
 							"pm.test(\"response is 200\", function() {",
 							"    pm.response.to.have.status(200);",
-							"})"
-						]
-					}
-				}
-			],
-			"request": {
-				"method": "DELETE",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json; charset=utf-8"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
-				"url": {
-					"raw": "http://localhost:8080/tasks/2",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8080",
-					"path": [
-						"tasks",
-						"2"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Search",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"id": "227cb492-a03f-40ec-a5af-8dab38286af9",
-						"type": "text/javascript",
-						"exec": [
-							"pm.test(\"response is 200\", function() {",
-							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"two tasks returned\", function() {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.length).to.be.above(1)",
 							"})",
 							"",
-							"pm.test(\"one task returned after delete\", function() {",
-							"    var jsonData = pm.response.json();",
-							"    pm.expect(jsonData.length).to.eql(1);",
-							"})"
-						]
+							"var jsonData = pm.response.json();",
+							"pm.environment.set(\"task_to_delete\", jsonData[jsonData.length-1].id);"
+						],
+						"type": "text/javascript"
 					}
 				}
 			],
@@ -389,12 +267,102 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://localhost:8080/tasks/search?name=my",
+					"raw": "http://localhost:7056/tasks",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8080",
+					"port": "7056",
+					"path": [
+						"tasks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "f085a364-c920-43af-bec4-61be1117976f",
+						"exec": [
+							"pm.test(\"response is 200\", function() {",
+							"    pm.response.to.have.status(200);",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json; charset=utf-8"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:7056/tasks/{{task_to_delete}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7056",
+					"path": [
+						"tasks",
+						"{{task_to_delete}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "227cb492-a03f-40ec-a5af-8dab38286af9",
+						"exec": [
+							"pm.test(\"response is 200\", function() {",
+							"    pm.response.to.have.status(200);",
+							"})",
+							"",
+							"pm.test(\"one task returned after delete\", function() {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.length).to.be.above(0)",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json; charset=utf-8"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:7056/tasks/search?name=my",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7056",
 					"path": [
 						"tasks",
 						"search"
