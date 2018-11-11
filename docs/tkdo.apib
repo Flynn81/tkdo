@@ -1,5 +1,5 @@
 FORMAT: 1A
-HOST: http://localhost:8080/
+HOST: http://localhost:7056/
 
 # TKDO
 
@@ -29,14 +29,13 @@ Use to get a list of tasks.
 
     + Attributes (NewTask)
 
-+ Response 201 (application/json; charset=utf-8)
-    + Attributes (Task)
++ Response 201
 
 ## Working with a Task [/tasks/{id}]
 
 + Parameters
 
-    + id: 1 (number) - unique identifier of the task
+    + id: `60853a85-681d-4620-9677-946bbfdc8fbc` (string) - unique identifier of the task
 
 ### Get a Task [GET]
 
@@ -84,5 +83,5 @@ Use to get a list of tasks.
 
 ## Task
 
-+ id: 1 (number) - unique identifier of the task
++ id: `60853a85-681d-4620-9677-946bbfdc8fbc` (string) - unique identifier of the task
 + Include NewTask

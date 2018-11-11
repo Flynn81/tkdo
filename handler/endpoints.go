@@ -20,6 +20,10 @@ func (sh SearchHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	//TODO pagination
 
+	if n[0] == "'"[0] {
+		n = n[1 : len(n)-1]
+	}
+
 	tasks := sh.TaskAccess.GetMany(n, t)
 
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -56,24 +60,19 @@ func getTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 
 	segments := strings.Split(r.RequestURI, "/")
 
-	id, err := strconv.Atoi(segments[len(segments)-1])
-
-	if err != nil {
-		http.Error(rw, "error with get", http.StatusBadRequest)
-		return
-	}
+	id := segments[len(segments)-1]
 
 	t, err := ta.Get(id)
 
 	if err != nil {
-		http.Error(rw, "error with get", http.StatusInternalServerError)
+		http.Error(rw, "error with get: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	bytes, err := json.Marshal(t)
 
 	if err != nil {
-		http.Error(rw, "error with get", http.StatusInternalServerError)
+		http.Error(rw, "error with get: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -96,13 +95,9 @@ func updateTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 		return
 	}
 
-	if t.ID == 0 {
+	if t.ID == "" {
 		segments := strings.Split(r.RequestURI, "/")
-		id, err2 := strconv.Atoi(segments[len(segments)-1])
-		if err2 != nil {
-			http.Error(rw, "error with update", http.StatusInternalServerError)
-			return
-		}
+		id := segments[len(segments)-1]
 		t.ID = id
 	}
 
@@ -126,20 +121,17 @@ func updateTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 
 func deleteTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 	segments := strings.Split(r.RequestURI, "/")
-	id, err := strconv.Atoi(segments[len(segments)-1])
-	if err != nil {
-		http.Error(rw, "error with delete", http.StatusBadRequest)
-		return
-	}
+	id := segments[len(segments)-1]
+
 	t, err := ta.Get(id)
 	if err != nil {
-		http.Error(rw, "error with delete", http.StatusBadRequest)
+		http.Error(rw, "error with delete: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	ta.Delete(id)
 	bytes, err := json.Marshal(t)
 	if err != nil {
-		http.Error(rw, "error with delete", http.StatusBadRequest)
+		http.Error(rw, "error with delete: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -156,19 +148,19 @@ func createTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 		http.Error(rw, "error with create", http.StatusInternalServerError)
 		return
 	}
-	newTask := ta.Create(&t)
-	var bytes []byte
-	bytes, err = json.Marshal(newTask)
-	if err != nil {
-		http.Error(rw, "error with create", http.StatusInternalServerError)
-		return
-	}
-	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+	ta.Create(&t)
+	// var bytes []byte
+	// bytes, err = json.Marshal(newTask)
+	// if err != nil {
+	// 	http.Error(rw, "error with create", http.StatusInternalServerError)
+	// 	return
+	// }
+	//rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 	rw.WriteHeader(http.StatusCreated)
-	_, err = rw.Write(bytes)
-	if err != nil {
-		panic(err)
-	}
+	// _, err = rw.Write(bytes)
+	// if err != nil {
+	// 	panic(err)
+	// }
 }
 
 //ListHandler is used to handle requests to list or create tasks
