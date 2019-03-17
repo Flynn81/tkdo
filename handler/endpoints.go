@@ -9,6 +9,10 @@ import (
 	"github.com/Flynn81/tkdo/model"
 )
 
+const (
+	regularTaskType = "regular"
+)
+
 //SearchHandler provides handler funcs for search
 type SearchHandler struct {
 	TaskAccess model.TaskAccess
@@ -147,6 +151,9 @@ func createTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 	if err != nil {
 		http.Error(rw, "error with create", http.StatusInternalServerError)
 		return
+	}
+	if t.TaskType == "" {
+		t.TaskType = regularTaskType
 	}
 	ta.Create(&t)
 	// var bytes []byte

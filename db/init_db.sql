@@ -9,5 +9,6 @@ set database = tkdo;
 CREATE TABLE IF NOT EXISTS task (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name varchar(256) NOT NULL,
-  type varchar(64) NOT NULL
+  type varchar(64) NOT NULL,
+  status varchar(256) NOT NULL
 );

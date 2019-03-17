@@ -28,21 +28,21 @@ func closeRows(r *sql.Rows) {
 //Get returns an task given an id.
 func (ta CockroachTaskAccess) Get(id string) (*Task, error) {
 
-	rows, err := db.Query("select id, name, type from task where id = $1", id)
+	rows, err := db.Query("select id, name, type, status from task where id = $1", id)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer closeRows(rows)
 
 	var (
-		i, n, t string
+		i, n, t, s string
 	)
 	if rows.Next() {
-		err := rows.Scan(&i, &n, &t)
+		err := rows.Scan(&i, &n, &t, &s)
 		if err != nil {
 			log.Fatal(err)
 		}
-		return &Task{i, n, t}, nil
+		return &Task{i, n, t, s}, nil
 	}
 
 	return nil, fmt.Errorf("task with id %v cannot be found", id)
@@ -51,7 +51,7 @@ func (ta CockroachTaskAccess) Get(id string) (*Task, error) {
 //Create takes a task without id and persists it.
 func (ta CockroachTaskAccess) Create(t *Task) *Task {
 	log.Println(t)
-	stmt, err := db.Prepare("INSERT INTO TASK (name, type) VALUES ($1, $2)")
+	stmt, err := db.Prepare("INSERT INTO TASK (name, type, status) VALUES ($1, $2, 'new')")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,12 +65,12 @@ func (ta CockroachTaskAccess) Create(t *Task) *Task {
 
 //Update takes a task and attempt to update it
 func (ta CockroachTaskAccess) Update(task *Task) bool {
-	stmt, err := db.Prepare("UPDATE TASK SET name=$1, type=$2 WHERE id = $3")
+	stmt, err := db.Prepare("UPDATE TASK SET name=$1, type=$2, status=$3 WHERE id = $4")
 	if err != nil {
 		log.Fatal(err)
 		return false
 	}
-	_, err = stmt.Exec(task.Name, task.TaskType, task.ID)
+	_, err = stmt.Exec(task.Name, task.TaskType, task.Status, task.ID)
 	if err != nil {
 		log.Fatal(err)
 		return false
@@ -96,7 +96,7 @@ func (ta CockroachTaskAccess) Delete(id string) bool {
 //GetMany returns tasks matching the given string and/or task type
 func (ta CockroachTaskAccess) GetMany(keyword string, taskType string) []*Task {
 
-	q := "select id, name, type from task"
+	q := "select id, name, type, status from task"
 	if keyword == "" && taskType == "" {
 		return nil
 	}
@@ -116,14 +116,14 @@ func (ta CockroachTaskAccess) GetMany(keyword string, taskType string) []*Task {
 	}
 	defer closeRows(rows)
 	var (
-		i, n, t string
+		i, n, t, s string
 	)
 	for rows.Next() {
-		err := rows.Scan(&i, &n, &t)
+		err := rows.Scan(&i, &n, &t, &s)
 		if err != nil {
 			log.Fatal(err)
 		}
-		r = append(r, &Task{i, n, t})
+		r = append(r, &Task{i, n, t, s})
 	}
 	return r
 }
@@ -139,24 +139,24 @@ func (ta CockroachTaskAccess) List(page int, pageSize int) []*Task {
 	}
 	log.Print("m is ", m)
 
-	rows, err := db.Query("select id, name, type from task")
+	rows, err := db.Query("select id, name, type, status from task")
 	var r = []*Task{}
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer closeRows(rows)
 	var (
-		i, n, t string
+		i, n, t, s string
 	)
 	rownum := 0
 	for rows.Next() {
-		err := rows.Scan(&i, &n, &t)
+		err := rows.Scan(&i, &n, &t, &s)
 		if err != nil {
 			log.Fatal(err)
 		}
 		log.Println("id is ", i)
 		if rownum >= page*pageSize && rownum < page*pageSize+pageSize {
-			r = append(r, &Task{i, n, t})
+			r = append(r, &Task{i, n, t, s})
 		}
 		rownum++
 	}
