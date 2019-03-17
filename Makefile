@@ -2,7 +2,7 @@ BIN_DIR := $(GOPATH)/bin
 GOMETALINTER := $(BIN_DIR)/gometalinter.exe
 COCKROACH := ./db/init.local
 
-localBuild: lint database build run dredd postman
+localBuild: apiDocs lint database build run dredd postman
 	$(info localBuild complete)
 
 lint: $(GOMETALINTER)
@@ -51,6 +51,10 @@ kill:
 	$(info attempting to kill the server)
 	if pgrep tkdo; then pkill tkdo; fi
 
+apiDocs:
+	$(info building API documentation)
+	aglio -i ./docs/tkdo.apib -o ./docs/index.html
+
 help:
 	$(info targets are:)
 	$(info localBuild)
@@ -60,3 +64,4 @@ help:
 	$(info postman)
 	$(info run)
 	$(info kill)
+	$(info apiDocs)
