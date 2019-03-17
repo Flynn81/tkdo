@@ -7,6 +7,7 @@ type Task struct {
 	ID       string `json:"id"`
 	Name     string `json:"name"`
 	TaskType string `json:"taskType"`
+	Status   string `json:"status"`
 }
 
 //TaskAccess functions to work with tasks
