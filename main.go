@@ -48,6 +48,10 @@ func main() {
 	uh := handler.UserHandler{UserAccess: ua}
 	http.Handle("/users", handler.CheckMethod(handler.CheckHeaders(uh, true), "POST"))
 
+	http.HandleFunc("/hc", func(rw http.ResponseWriter, r *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	})
+
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusNotFound)
 		_, err := fmt.Fprint(rw, "these aren't the droids you're looking for")

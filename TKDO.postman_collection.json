@@ -6,6 +6,43 @@
 	},
 	"item": [
 		{
+			"name": "Health Check",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "a98c1fe0-233e-4d88-b5f2-90114f8a7d1a",
+						"exec": [
+							"pm.test(\"response is 200\", function() {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:7056/hc",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7056",
+					"path": [
+						"hc"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Create User",
 			"event": [
 				{
