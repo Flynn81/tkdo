@@ -41,7 +41,7 @@ dredd: run
 postman: run
 	$(info running postman)
 	docker exec -it roach1 ./cockroach sql --insecure --execute="$(shell cat ./db/postman_data_init.sql)"
-	newman run TKDO.postman_collection.json
+	newman run TKDO.postman_collection.json -e local-env.postman_environment.json
 
 run: kill
 	$(info running the server)

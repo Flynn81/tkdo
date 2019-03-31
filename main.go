@@ -33,18 +33,23 @@ func main() {
 	defer closeDB(db)
 
 	ta := model.CockroachTaskAccess{}
+	ua := model.CockroachUserAccess{}
 	//inMem := model.InMemTaskAccess{Mux: &sync.Mutex{}}
 
 	lh := handler.ListHandler{TaskAccess: ta}
-	http.Handle("/tasks", handler.CheckMethod(handler.CheckHeaders(lh), "GET", "POST"))
+	http.Handle("/tasks", handler.CheckMethod(handler.CheckHeaders(lh, false), "GET", "POST"))
 
 	th := handler.TaskHandler{TaskAccess: ta}
-	http.Handle("/tasks/", handler.CheckMethod(handler.CheckHeaders(th), "GET", "DELETE", "PUT"))
+	http.Handle("/tasks/", handler.CheckMethod(handler.CheckHeaders(th, false), "GET", "DELETE", "PUT"))
 
 	sh := handler.SearchHandler{TaskAccess: ta}
-	http.Handle("/tasks/search", handler.CheckMethod(handler.CheckHeaders(sh), "GET"))
+	http.Handle("/tasks/search", handler.CheckMethod(handler.CheckHeaders(sh, false), "GET"))
+
+	uh := handler.UserHandler{UserAccess: ua}
+	http.Handle("/users", handler.CheckMethod(handler.CheckHeaders(uh, true), "POST"))
 
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
+		rw.WriteHeader(http.StatusNotFound)
 		_, err := fmt.Fprint(rw, "these aren't the droids you're looking for")
 		if err != nil {
 			panic(err)

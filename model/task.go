@@ -8,14 +8,15 @@ type Task struct {
 	Name     string `json:"name"`
 	TaskType string `json:"taskType"`
 	Status   string `json:"status"`
+	UserID   string `json:"userId"`
 }
 
 //TaskAccess functions to work with tasks
 type TaskAccess interface {
-	Get(id string) (*Task, error)
+	Get(id string, userID string) (*Task, error)
 	Create(t *Task) *Task
 	Update(task *Task) bool
-	Delete(id string) bool
-	GetMany(keyword string, taskType string) []*Task
-	List(page int, pageSize int) []*Task
+	Delete(id string, userID string) bool
+	GetMany(keyword string, taskType string, userID string) []*Task
+	List(page int, pageSize int, userID string) []*Task
 }

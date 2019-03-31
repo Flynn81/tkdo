@@ -13,6 +13,33 @@ const (
 	regularTaskType = "regular"
 )
 
+//UserHandler processes http requests for user operations
+type UserHandler struct {
+	UserAccess model.UserAccess
+}
+
+func (uh UserHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	var u model.User
+	err := json.NewDecoder(r.Body).Decode(&u)
+	if err != nil {
+		http.Error(rw, "error with create", http.StatusInternalServerError)
+		return
+	}
+	newUser := uh.UserAccess.Create(&u)
+	var bytes []byte
+	bytes, err = json.Marshal(newUser)
+	if err != nil {
+		http.Error(rw, "error with create", http.StatusInternalServerError)
+		return
+	}
+	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+	rw.WriteHeader(http.StatusCreated)
+	_, err = rw.Write(bytes)
+	if err != nil {
+		panic(err)
+	}
+}
+
 //SearchHandler provides handler funcs for search
 type SearchHandler struct {
 	TaskAccess model.TaskAccess
@@ -28,7 +55,7 @@ func (sh SearchHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		n = n[1 : len(n)-1]
 	}
 
-	tasks := sh.TaskAccess.GetMany(n, t)
+	tasks := sh.TaskAccess.GetMany(n, t, r.Header.Get("uid"))
 
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 
@@ -66,7 +93,7 @@ func getTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 
 	id := segments[len(segments)-1]
 
-	t, err := ta.Get(id)
+	t, err := ta.Get(id, r.Header.Get("uid"))
 
 	if err != nil {
 		http.Error(rw, "error with get: "+err.Error(), http.StatusInternalServerError)
@@ -104,7 +131,7 @@ func updateTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 		id := segments[len(segments)-1]
 		t.ID = id
 	}
-
+	t.UserID = r.Header.Get("uid")
 	b := ta.Update(&t)
 	var bytes []byte
 	bytes, err = json.Marshal(t)
@@ -127,12 +154,12 @@ func deleteTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 	segments := strings.Split(r.RequestURI, "/")
 	id := segments[len(segments)-1]
 
-	t, err := ta.Get(id)
+	t, err := ta.Get(id, r.Header.Get("uid"))
 	if err != nil {
 		http.Error(rw, "error with delete: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	ta.Delete(id)
+	ta.Delete(id, r.Header.Get("uid"))
 	bytes, err := json.Marshal(t)
 	if err != nil {
 		http.Error(rw, "error with delete: "+err.Error(), http.StatusBadRequest)
@@ -155,6 +182,7 @@ func createTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 	if t.TaskType == "" {
 		t.TaskType = regularTaskType
 	}
+	t.UserID = r.Header.Get("uid")
 	ta.Create(&t)
 	// var bytes []byte
 	// bytes, err = json.Marshal(newTask)
@@ -193,7 +221,7 @@ func listTasks(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 		pageSize = 50
 	}
 
-	tasks := ta.List(page, pageSize)
+	tasks := ta.List(page, pageSize, r.Header.Get("uid"))
 
 	bytes, err := json.Marshal(tasks)
 
