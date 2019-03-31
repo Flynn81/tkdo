@@ -1,7 +1,0 @@
-dependencies:
-  pre:
-    - npm config set registry http://registry.npmjs.org/
-    - npm install -g dredd@4.1.1
-test:
-  pre:
-    - dredd docs/tkdo.apib http://localhost:8080/
