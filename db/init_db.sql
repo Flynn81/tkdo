@@ -17,5 +17,9 @@ CREATE TABLE IF NOT EXISTS task (
 CREATE TABLE IF NOT EXISTS task_user (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name varchar(256) NOT NULL,
-  email varchar(256) NOT NULL UNIQUE
+  email varchar(256) NOT NULL UNIQUE,
+  hash bytes,
+  status varchar(64) NOT NULL,
+  client_id varchar(512) DEFAULT '',
+  client_secret varchar(512) DEFAULT ''
 );

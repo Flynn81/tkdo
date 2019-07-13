@@ -14,7 +14,8 @@ func (ta CockroachTaskAccess) Get(id string, userID string) (*Task, error) {
 
 	rows, err := db.Query("select id, name, type, status, user_id from task where id = $1 and user_id = $2", id, userID)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return nil, err
 	}
 	defer closeRows(rows)
 

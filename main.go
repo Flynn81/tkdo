@@ -5,14 +5,24 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"reflect"
 
 	"github.com/Flynn81/tkdo/handler"
 	"github.com/Flynn81/tkdo/model"
+	"github.com/gorilla/handlers"
+
+	"gopkg.in/oauth2.v3/errors"
+	"gopkg.in/oauth2.v3/manage"
+	"gopkg.in/oauth2.v3/models"
+	"gopkg.in/oauth2.v3/server"
+	"gopkg.in/oauth2.v3/store"
 
 	_ "github.com/lib/pq"
 )
 
 func closeDB(db *sql.DB) {
+	log.Println("closing db")
 	err := db.Close()
 	if err != nil {
 		log.Println(err)
@@ -32,25 +42,35 @@ func main() {
 	model.Init(db)
 	defer closeDB(db)
 
+	argsWithoutProg := os.Args[1:]
+	if len(argsWithoutProg) == 3 && argsWithoutProg[0] == "admin" {
+		initAdmin(argsWithoutProg[1], argsWithoutProg[2])
+		return
+	}
+
+	oauth := initOauth()
+
 	ta := model.CockroachTaskAccess{}
 	ua := model.CockroachUserAccess{}
-	//inMem := model.InMemTaskAccess{Mux: &sync.Mutex{}}
 
 	lh := handler.ListHandler{TaskAccess: ta}
-	http.Handle("/tasks", handler.CheckMethod(handler.CheckHeaders(lh, false), "GET", "POST"))
+	http.Handle("/tasks", handler.CheckForAuthToken(handler.CheckMethod(handler.CheckHeaders(lh, false), "GET", "POST"), *oauth))
 
 	th := handler.TaskHandler{TaskAccess: ta}
-	http.Handle("/tasks/", handler.CheckMethod(handler.CheckHeaders(th, false), "GET", "DELETE", "PUT"))
+	http.Handle("/tasks/", handler.CheckForAuthToken(handler.CheckMethod(handler.CheckHeaders(th, false), "GET", "DELETE", "PUT"), *oauth))
 
 	sh := handler.SearchHandler{TaskAccess: ta}
-	http.Handle("/tasks/search", handler.CheckMethod(handler.CheckHeaders(sh, false), "GET"))
+	http.Handle("/tasks/search", handler.CheckForAuthToken(handler.CheckMethod(handler.CheckHeaders(sh, false), "GET"), *oauth))
 
 	uh := handler.UserHandler{UserAccess: ua}
-	http.Handle("/users", handler.CheckMethod(handler.CheckHeaders(uh, true), "POST"))
+	http.Handle("/users", handler.CheckForAuthToken(handler.CheckMethod(handler.CheckHeaders(uh, true), "POST"), *oauth))
 
 	http.HandleFunc("/hc", func(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	})
+
+	logh := handler.LoginHandler{UserAccess: ua, Oauth: oauth}
+	http.Handle("/login", handler.CheckMethod(handler.CheckHeaders(logh, true), "POST"))
 
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusNotFound)
@@ -60,9 +80,56 @@ func main() {
 		}
 	})
 
-	err := http.ListenAndServe(":7056", nil)
+	v := reflect.ValueOf(http.DefaultServeMux).Elem()
+	fmt.Printf("routes: %v\n", v.FieldByName("m"))
+
+	err := http.ListenAndServe(":7056", handlers.LoggingHandler(os.Stdout, http.DefaultServeMux)) //todo: make port env var
 	if err != nil {
 		panic(err)
 	}
 	log.Println("Server shutdown")
+}
+
+func initAdmin(p string, e string) {
+	ua := model.CockroachUserAccess{}
+	u := model.User{ID: "", Name: "admin", Email: e, Status: "admin"}
+	c := ua.Create(&u)
+	ua.UpdatePassword(c.ID, p)
+}
+
+func initOauth() *server.Server {
+
+	log.Println("initOauth")
+	manager := manage.NewDefaultManager()
+	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
+
+	// token store
+	manager.MustTokenStorage(store.NewMemoryTokenStore())
+
+	clientStore := store.NewClientStore()
+	err := clientStore.Set("000000", &models.Client{
+		ID:     "000000",
+		Secret: "999999",
+		Domain: "http://localhost:7056",
+	})
+	if err != nil {
+		panic(err)
+	}
+	manager.MapClientStorage(clientStore)
+
+	srv := server.NewDefaultServer(manager)
+	srv.SetAllowGetAccessRequest(true)
+	srv.SetClientInfoHandler(server.ClientFormHandler)
+	//srv.SetUserAuthorizationHandler(userAuthorizeHandler)  I THINK THIS IS FOR LOGIN...
+
+	srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {
+		log.Println("Internal Error:", err.Error())
+		return
+	})
+
+	srv.SetResponseErrorHandler(func(re *errors.Response) {
+		log.Println("Response Error:", re.Error.Error())
+	})
+
+	return srv
 }

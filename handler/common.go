@@ -3,8 +3,10 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/Flynn81/tkdo/model"
+	"gopkg.in/oauth2.v3/server"
 )
 
 //CheckMethod takes a slice of strings, which should represent the http
@@ -43,6 +45,22 @@ func CheckHeaders(h http.Handler, u bool) http.Handler {
 		//write error response
 		//set response status code
 
+		h.ServeHTTP(w, r)
+	})
+}
+
+//CheckForAuthToken is middleware to check for an auth token
+func CheckForAuthToken(h http.Handler, s server.Server) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, err := s.ValidationBearerToken(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if int64(time.Until(token.GetAccessCreateAt().Add(token.GetAccessExpiresIn())).Seconds()) < 0 {
+			http.Error(w, "expired token", http.StatusBadRequest)
+			return
+		}
 		h.ServeHTTP(w, r)
 	})
 }
