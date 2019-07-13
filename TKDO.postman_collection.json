@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "bdcac266-ad81-41bd-b786-45898cf36aea",
+		"_postman_id": "86bf380f-a81a-4b7d-8a71-ba890411b5c7",
 		"name": "TKDO",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -24,10 +24,6 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
 					"raw": "http://localhost:7056/hc",
 					"protocol": "http",
@@ -37,6 +33,389 @@
 					"port": "7056",
 					"path": [
 						"hc"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create User No Auth",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "eae7a45d-3eff-4d38-8915-a804d3d0a627",
+						"exec": [
+							"pm.test(\"response is 201\", function() {",
+							"    pm.response.to.have.status(400);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "6fdf24e2-8a1c-4876-b197-9d331134e181",
+						"exec": [
+							"pm.environment.set(\"user_email\", Math.floor(Math.random() * 10000)+\"@somewhere.com\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json; charset=utf-8"
+					},
+					{
+						"key": "uid",
+						"type": "text",
+						"value": "demo"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\":\"Pat Smith\",\n\t\"email\":\"{{user_email}}\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:7056/users",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7056",
+					"path": [
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get List No Auth",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "a98c1fe0-233e-4d88-b5f2-90114f8a7d1a",
+						"exec": [
+							"pm.test(\"response is 400\", function() {",
+							"    pm.response.to.have.status(400);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json; charset=utf-8"
+					},
+					{
+						"key": "uid",
+						"type": "text",
+						"value": "{{user_id}}"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:7056/tasks",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7056",
+					"path": [
+						"tasks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get A Task No Auth",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e0e1e210-31d1-4d61-be4e-db5ebb93a3ae",
+						"exec": [
+							"pm.test(\"response is 400\", function() {",
+							"    pm.response.to.have.status(400);",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json; charset=utf-8"
+					},
+					{
+						"key": "uid",
+						"type": "text",
+						"value": "{{user_id}}"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:7056/tasks/{{task_to_get}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7056",
+					"path": [
+						"tasks",
+						"{{task_to_get}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update No Auth",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "4c77338b-b59a-4b9a-928d-a2fce21774e7",
+						"exec": [
+							"pm.test(\"response is 400\", function() {",
+							"    pm.response.to.have.status(400);",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json; charset=utf-8"
+					},
+					{
+						"key": "uid",
+						"type": "text",
+						"value": "{{user_id}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\":\"my test update\",\n\t\"type\":\"basic\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:7056/tasks/{{task_to_get}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7056",
+					"path": [
+						"tasks",
+						"{{task_to_get}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete No Auth",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "f085a364-c920-43af-bec4-61be1117976f",
+						"exec": [
+							"pm.test(\"response is 400\", function() {",
+							"    pm.response.to.have.status(400);",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json; charset=utf-8"
+					},
+					{
+						"key": "uid",
+						"value": "{{user_id}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:7056/tasks/{{task_to_delete}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7056",
+					"path": [
+						"tasks",
+						"{{task_to_delete}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Search No Auth",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "227cb492-a03f-40ec-a5af-8dab38286af9",
+						"exec": [
+							"pm.test(\"response is 400\", function() {",
+							"    pm.response.to.have.status(400);",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json; charset=utf-8"
+					},
+					{
+						"key": "uid",
+						"value": "{{user_id}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:7056/tasks/search?name=my",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7056",
+					"path": [
+						"tasks",
+						"search"
+					],
+					"query": [
+						{
+							"key": "name",
+							"value": "my"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Task No Auth",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "eae7a45d-3eff-4d38-8915-a804d3d0a627",
+						"exec": [
+							"pm.test(\"response is 400\", function() {",
+							"    pm.response.to.have.status(400);",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json; charset=utf-8"
+					},
+					{
+						"key": "uid",
+						"type": "text",
+						"value": "{{user_id}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\":\"my test first one\",\n\t\"type\":\"basic\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:7056/tasks",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7056",
+					"path": [
+						"tasks"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "a98c1fe0-233e-4d88-b5f2-90114f8a7d1a",
+						"exec": [
+							"pm.test(\"response is 200\", function() {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"var jsonData = pm.response.json();",
+							"pm.environment.set(\"token\", jsonData.token);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json; charset=utf-8",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"email\": \"noemail\",\n\t\"password\": \"password\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:7056/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7056",
+					"path": [
+						"login"
 					]
 				}
 			},
@@ -89,7 +468,7 @@
 					"raw": "{\n\t\"name\":\"Pat Smith\",\n\t\"email\":\"{{user_email}}\"\n}"
 				},
 				"url": {
-					"raw": "http://localhost:7056/users",
+					"raw": "http://localhost:7056/users?access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -97,6 +476,12 @@
 					"port": "7056",
 					"path": [
 						"users"
+					],
+					"query": [
+						{
+							"key": "access_token",
+							"value": "{{token}}"
+						}
 					]
 				}
 			},
@@ -131,7 +516,7 @@
 					"raw": "{\n\t\"name\":\"my test first one\",\n\t\"type\":\"basic\"\n}"
 				},
 				"url": {
-					"raw": "http://localhost:7056/tasks",
+					"raw": "http://localhost:7056/tasks?access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -139,6 +524,12 @@
 					"port": "7056",
 					"path": [
 						"tasks"
+					],
+					"query": [
+						{
+							"key": "access_token",
+							"value": "{{token}}"
+						}
 					]
 				}
 			},
@@ -178,7 +569,7 @@
 					"raw": "{\n\t\"name\":\"my test first one\",\n\t\"type\":\"basic\"\n}"
 				},
 				"url": {
-					"raw": "http://localhost:7056/tasks",
+					"raw": "http://localhost:7056/tasks?access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -186,6 +577,12 @@
 					"port": "7056",
 					"path": [
 						"tasks"
+					],
+					"query": [
+						{
+							"key": "access_token",
+							"value": "{{token}}"
+						}
 					]
 				}
 			},
@@ -225,7 +622,7 @@
 					"raw": "{\n\t\"name\":\"my test first one\",\n\t\"type\":\"basic\"\n}"
 				},
 				"url": {
-					"raw": "http://localhost:7056/tasks",
+					"raw": "http://localhost:7056/tasks?access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -233,6 +630,12 @@
 					"port": "7056",
 					"path": [
 						"tasks"
+					],
+					"query": [
+						{
+							"key": "access_token",
+							"value": "{{token}}"
+						}
 					]
 				}
 			},
@@ -262,12 +665,8 @@
 						"value": "application/json; charset=utf-8"
 					}
 				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
-					"raw": "http://localhost:7056/tasks",
+					"raw": "http://localhost:7056/tasks?access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -275,6 +674,12 @@
 					"port": "7056",
 					"path": [
 						"tasks"
+					],
+					"query": [
+						{
+							"key": "access_token",
+							"value": "{{token}}"
+						}
 					]
 				}
 			},
@@ -317,12 +722,8 @@
 						"type": "text"
 					}
 				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
-					"raw": "http://localhost:7056/tasks",
+					"raw": "http://localhost:7056/tasks?access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -330,6 +731,12 @@
 					"port": "7056",
 					"path": [
 						"tasks"
+					],
+					"query": [
+						{
+							"key": "access_token",
+							"value": "{{token}}"
+						}
 					]
 				}
 			},
@@ -359,12 +766,8 @@
 						"value": "application/json; charset=utf-8"
 					}
 				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
-					"raw": "http://localhost:7056/tasks/{{task_to_get}}",
+					"raw": "http://localhost:7056/tasks/{{task_to_get}}?access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -373,6 +776,12 @@
 					"path": [
 						"tasks",
 						"{{task_to_get}}"
+					],
+					"query": [
+						{
+							"key": "access_token",
+							"value": "{{token}}"
+						}
 					]
 				}
 			},
@@ -407,12 +816,8 @@
 						"type": "text"
 					}
 				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
-					"raw": "http://localhost:7056/tasks/{{task_to_get}}",
+					"raw": "http://localhost:7056/tasks/{{task_to_get}}?access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -421,6 +826,12 @@
 					"path": [
 						"tasks",
 						"{{task_to_get}}"
+					],
+					"query": [
+						{
+							"key": "access_token",
+							"value": "{{token}}"
+						}
 					]
 				}
 			},
@@ -460,7 +871,7 @@
 					"raw": "{\n\t\"name\":\"my test 2nd task\",\n\t\"type\":\"basic\"\n}"
 				},
 				"url": {
-					"raw": "http://localhost:7056/tasks",
+					"raw": "http://localhost:7056/tasks?access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -468,6 +879,12 @@
 					"port": "7056",
 					"path": [
 						"tasks"
+					],
+					"query": [
+						{
+							"key": "access_token",
+							"value": "{{token}}"
+						}
 					]
 				}
 			},
@@ -502,7 +919,7 @@
 					"raw": "{\n\t\"name\":\"my test update\",\n\t\"type\":\"basic\"\n}"
 				},
 				"url": {
-					"raw": "http://localhost:7056/tasks/{{task_to_get}}",
+					"raw": "http://localhost:7056/tasks/{{task_to_get}}?access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -511,6 +928,12 @@
 					"path": [
 						"tasks",
 						"{{task_to_get}}"
+					],
+					"query": [
+						{
+							"key": "access_token",
+							"value": "{{token}}"
+						}
 					]
 				}
 			},
@@ -555,7 +978,7 @@
 					"raw": "{\n\t\"name\":\"my test update\",\n\t\"type\":\"basic\"\n}"
 				},
 				"url": {
-					"raw": "http://localhost:7056/tasks/{{task_to_get}}",
+					"raw": "http://localhost:7056/tasks/{{task_to_get}}?access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -564,6 +987,12 @@
 					"path": [
 						"tasks",
 						"{{task_to_get}}"
+					],
+					"query": [
+						{
+							"key": "access_token",
+							"value": "{{token}}"
+						}
 					]
 				}
 			},
@@ -606,12 +1035,8 @@
 						"type": "text"
 					}
 				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
-					"raw": "http://localhost:7056/tasks",
+					"raw": "http://localhost:7056/tasks?access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -619,6 +1044,12 @@
 					"port": "7056",
 					"path": [
 						"tasks"
+					],
+					"query": [
+						{
+							"key": "access_token",
+							"value": "{{token}}"
+						}
 					]
 				}
 			},
@@ -653,7 +1084,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://localhost:7056/tasks/{{task_to_delete}}",
+					"raw": "http://localhost:7056/tasks/{{task_to_delete}}?access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -662,6 +1093,12 @@
 					"path": [
 						"tasks",
 						"{{task_to_delete}}"
+					],
+					"query": [
+						{
+							"key": "access_token",
+							"value": "{{token}}"
+						}
 					]
 				}
 			},
@@ -701,7 +1138,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://localhost:7056/tasks/{{task_to_delete}}",
+					"raw": "http://localhost:7056/tasks/{{task_to_delete}}?access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -710,6 +1147,12 @@
 					"path": [
 						"tasks",
 						"{{task_to_delete}}"
+					],
+					"query": [
+						{
+							"key": "access_token",
+							"value": "{{token}}"
+						}
 					]
 				}
 			},
@@ -739,12 +1182,8 @@
 						"value": "application/json; charset=utf-8"
 					}
 				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
-					"raw": "http://localhost:7056/tasks/search?name=my",
+					"raw": "http://localhost:7056/tasks/search?name=my&access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -758,6 +1197,10 @@
 						{
 							"key": "name",
 							"value": "my"
+						},
+						{
+							"key": "access_token",
+							"value": "{{token}}"
 						}
 					]
 				}
@@ -798,12 +1241,8 @@
 						"type": "text"
 					}
 				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
-					"raw": "http://localhost:7056/tasks/search?name=my",
+					"raw": "http://localhost:7056/tasks/search?name=my&access_token={{token}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -817,6 +1256,10 @@
 						{
 							"key": "name",
 							"value": "my"
+						},
+						{
+							"key": "access_token",
+							"value": "{{token}}"
 						}
 					]
 				}

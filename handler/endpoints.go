@@ -91,7 +91,7 @@ func getTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 
 	segments := strings.Split(r.RequestURI, "/")
 
-	id := segments[len(segments)-1]
+	id := strings.Split(segments[len(segments)-1], "?")[0]
 
 	t, err := ta.Get(id, r.Header.Get("uid"))
 
@@ -128,7 +128,7 @@ func updateTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 
 	if t.ID == "" {
 		segments := strings.Split(r.RequestURI, "/")
-		id := segments[len(segments)-1]
+		id := strings.Split(segments[len(segments)-1], "?")[0]
 		t.ID = id
 	}
 	t.UserID = r.Header.Get("uid")
@@ -152,7 +152,7 @@ func updateTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 
 func deleteTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 	segments := strings.Split(r.RequestURI, "/")
-	id := segments[len(segments)-1]
+	id := strings.Split(segments[len(segments)-1], "?")[0]
 
 	t, err := ta.Get(id, r.Header.Get("uid"))
 	if err != nil {

@@ -2,7 +2,7 @@ BIN_DIR := $(GOPATH)/bin
 GOMETALINTER := $(BIN_DIR)/gometalinter.exe
 COCKROACH := ./db/init.local
 
-localBuild: apiDocs lint database build run dredd postman
+localBuild: apiDocs lint database build run postman
 	$(info localBuild complete)
 
 lint: $(GOMETALINTER)
@@ -54,6 +54,10 @@ kill:
 apiDocs:
 	$(info building API documentation)
 	aglio -i ./docs/tkdo.apib -o ./docs/index.html
+
+delAdmin:
+	$(info deleting admin users)
+	docker exec -it roach1 ./cockroach sql --insecure --execute="$(shell cat ./db/del_admin.sql)"
 
 help:
 	$(info targets are:)

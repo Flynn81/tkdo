@@ -12,12 +12,28 @@ No-op to say the server is up or not
 
 + Response 200
 
+## Login [/login]
+
+### Auth Token [POST]
+Retrieve an authorization token
+
++ Request (application/json; charset=utf-8)
+    + Attributes (Login)
+
++ Response 200 (application/json; charset=utf-8)
+    + Attributes (AuthenticatedUser)
+
 ## User [/users]
 
 ### Create User [POST]
 Creates a given user
 
 + Request (application/json; charset=utf-8)
+
+    + Headers
+
+                token: authentication_token
+
     + Attributes (User)
 
 + Response 201 (application/json; charset=utf-8)
@@ -35,11 +51,14 @@ Creates a given user
 Use to get a list of tasks.
 
 + Request (application/json; charset=utf-8)
-    + Header
 
-            uid: 00000000-0000-0000-0000-000000000000
+    + Headers
+
+                token: authentication_token
+                uid: 00000000-0000-0000-0000-000000000000
 
 + Response 200 (application/json; charset=utf-8)
+
     + Attributes (array[Task])
 
 + Response 401 (application/json; charset=utf-8)
@@ -50,9 +69,11 @@ Use to get a list of tasks.
 ### Create A Task [POST]
 
 + Request (application/json; charset=utf-8)
-    + Header
 
-            uid: 00000000-0000-0000-0000-000000000000
+    + Headers
+
+                token: authentication_token
+                uid: 00000000-0000-0000-0000-000000000000
 
     + Attributes (NewTask)
 
@@ -70,9 +91,11 @@ Use to get a list of tasks.
 ### Get a Task [GET]
 
 + Request (application/json; charset=utf-8)
-    + Header
 
-            uid: 00000000-0000-0000-0000-000000000000
+    + Headers
+
+                token: authentication_token
+                uid: 00000000-0000-0000-0000-000000000000
 
 + Response 200 (application/json; charset=utf-8)
     + Attributes (Task)
@@ -83,11 +106,12 @@ Use to get a list of tasks.
 ### Update a task [PUT]
 
 + Request (application/json; charset=utf-8)
-    + Header
 
-            uid: 00000000-0000-0000-0000-000000000000
+    + Headers
 
-+ Attributes (Task)
+                token: authentication_token
+
+    + Attributes (Task)
 
 + Response 200 (application/json; charset=utf-8)
     + Attributes (Task)
@@ -98,9 +122,10 @@ Use to get a list of tasks.
 ### Delete a task [DELETE]
 
 + Request (application/json; charset=utf-8)
-    + Header
 
-            uid: 00000000-0000-0000-0000-000000000000
+    + Headers
+
+                token: authentication_token
 
 + Response 200 (application/json; charset=utf-8)
     + Attributes (Task)
@@ -117,9 +142,11 @@ Use to get a list of tasks.
 ### Task Search [GET]
 
 + Request (application/json; charset=utf-8)
-    + Header
 
-            uid: 00000000-0000-0000-0000-000000000000
+    + Headers
+
+                token: authentication_token
+                uid: 00000000-0000-0000-0000-000000000000
 
 + Response 200 (application/json; charset=utf-8)
     + Attributes (array[Task])
@@ -144,6 +171,11 @@ Use to get a list of tasks.
 + status: open (string, required) - status of the task
 + Include NewTask
 
+## Token
++ access_token: `tokenvalue` (string)
++ expires_in: 7200 (number) - time is in seconds
++ token_type: `Bearer` (string)
+
 ## NewUser
 
 + name: Pat Smith (string, required) - user's name
@@ -153,3 +185,13 @@ Use to get a list of tasks.
 
 - id: `00000000-0000-0000-0000-000000000000`
 + Include NewUser
+
+## AuthenticatedUser
+
++ Include NewUser
++ token: 123456 (string, required) - authentication token
+
+## Login
+
++ email: something@something.com (string, required) - email address to login with
++ password: changeme (string, required) - password to login with
