@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -13,32 +14,32 @@ type CockroachUserAccess struct {
 
 //Get returns a user given an email address
 func (ua CockroachUserAccess) Get(email string) (*User, error) {
-	rows, err := db.Query("select id, name, email, hash, status, client_id, client_secret from task_user where email = $1", email)
+	rows, err := db.Query("select id, name, email, hash, status from task_user where email = $1", email)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer closeRows(rows)
 	var (
-		i, n, e, cs, ci, s string
+		i, n, e, s string
 	)
 	var h []byte
 	if rows.Next() {
-		err := rows.Scan(&i, &n, &e, &h, &s, &ci, &cs)
+		err := rows.Scan(&i, &n, &e, &h, &s)
 		if err != nil {
 			log.Fatal(err)
 		}
-		return &User{i, n, e, h, s, ci, cs}, nil
+		return &User{i, n, e, h, s}, nil
 	}
 	return nil, fmt.Errorf("user with email %v cannot be found", email)
 }
 
 //Create takes a user without an id and persists it
 func (ua CockroachUserAccess) Create(u *User) *User {
-	stmt, err := db.Prepare("INSERT INTO TASK_USER (name, email, status) VALUES ($1, $2, $3) RETURNING ID")
+	stmt, err := db.Prepare("INSERT INTO TASK_USER (id, name, email, status) VALUES ($1, $2, $3, $4) RETURNING ID")
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = stmt.Exec(u.Name, u.Email, u.Status)
+	_, err = stmt.Exec(uuid.NewString(), u.Name, u.Email, u.Status)
 	if err != nil {
 		log.Fatal(err)
 	}

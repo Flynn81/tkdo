@@ -1,0 +1,18 @@
+# github.com/Flynn81/tkdo v0.0.0-20190902034420-d812f0091834
+github.com/Flynn81/tkdo/handler
+github.com/Flynn81/tkdo/model
+# github.com/felixge/httpsnoop v1.0.1
+github.com/felixge/httpsnoop
+# github.com/gorilla/handlers v1.5.1
+github.com/gorilla/handlers
+# github.com/lib/pq v1.9.0
+github.com/lib/pq
+github.com/lib/pq/oid
+github.com/lib/pq/scram
+# golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+golang.org/x/crypto/bcrypt
+golang.org/x/crypto/blowfish
+# gopkg.in/oauth2.v3 v3.12.0
+gopkg.in/oauth2.v3
+gopkg.in/oauth2.v3/errors
+gopkg.in/oauth2.v3/server

@@ -12,27 +12,12 @@ No-op to say the server is up or not
 
 + Response 200
 
-## Login [/login]
-
-### Auth Token [POST]
-Retrieve an authorization token
-
-+ Request (application/json; charset=utf-8)
-    + Attributes (Login)
-
-+ Response 200 (application/json; charset=utf-8)
-    + Attributes (AuthenticatedUser)
-
 ## User [/users]
 
 ### Create User [POST]
 Creates a given user
 
 + Request (application/json; charset=utf-8)
-
-    + Headers
-
-                token: authentication_token
 
     + Attributes (User)
 
@@ -109,7 +94,7 @@ Use to get a list of tasks.
 
     + Headers
 
-                token: authentication_token
+                uid: 00000000-0000-0000-0000-000000000000
 
     + Attributes (Task)
 
@@ -125,7 +110,7 @@ Use to get a list of tasks.
 
     + Headers
 
-                token: authentication_token
+                uid: 00000000-0000-0000-0000-000000000000
 
 + Response 200 (application/json; charset=utf-8)
     + Attributes (Task)

@@ -20,3 +20,10 @@ make goals:
 - apiDocs
 - delAdmin
 - help
+
+requires env vars:
+- TKDO_HOST
+- TKDO_PORT
+- TKDO_USER
+- TKDO_PASSWORD
+- TKDO_DBNAME

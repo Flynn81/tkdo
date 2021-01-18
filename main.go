@@ -12,12 +12,6 @@ import (
 	"github.com/Flynn81/tkdo/model"
 	"github.com/gorilla/handlers"
 
-	"gopkg.in/oauth2.v3/errors"
-	"gopkg.in/oauth2.v3/manage"
-	"gopkg.in/oauth2.v3/models"
-	"gopkg.in/oauth2.v3/server"
-	"gopkg.in/oauth2.v3/store"
-
 	_ "github.com/lib/pq"
 )
 
@@ -29,13 +23,37 @@ func closeDB(db *sql.DB) {
 	}
 }
 
+const (
+	envHost     = "TKDO_HOST"
+	envPort     = "TKDO_PORT"
+	envUser     = "TKDO_USER"
+	envPassword = "TKDO_PASSWORD"
+	envDbName   = "TKDO_DBNAME"
+)
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.Println("Server startup")
 
+	// - TKDO_HOST
+	// - TKDO_PORT
+	// - TKDO_USER
+	// - TKDO_PASSWORD
+	// - TKDO_DBNAME
+
+	//TODO: add some validation
+	host := os.Getenv(envHost)
+	port := os.Getenv(envPort)
+	user := os.Getenv(envUser)
+	password := os.Getenv(envPassword)
+	dbname := os.Getenv(envDbName)
+
 	var err2 error
+
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+
 	db, err2 := sql.Open("postgres",
-		"postgresql://tk@localhost:26257/tkdo?sslmode=disable")
+		psqlInfo)
 	if err2 != nil {
 		log.Fatal("error connecting to the database: ", err2)
 	}
@@ -48,29 +66,24 @@ func main() {
 		return
 	}
 
-	oauth := initOauth()
-
 	ta := model.CockroachTaskAccess{}
 	ua := model.CockroachUserAccess{}
 
 	lh := handler.ListHandler{TaskAccess: ta}
-	http.Handle("/tasks", handler.CheckForAuthToken(handler.CheckMethod(handler.CheckHeaders(lh, false), "GET", "POST"), *oauth))
+	http.Handle("/tasks", handler.CheckMethod(handler.CheckHeaders(lh, false), "GET", "POST"))
 
 	th := handler.TaskHandler{TaskAccess: ta}
-	http.Handle("/tasks/", handler.CheckForAuthToken(handler.CheckMethod(handler.CheckHeaders(th, false), "GET", "DELETE", "PUT"), *oauth))
+	http.Handle("/tasks/", handler.CheckMethod(handler.CheckHeaders(th, false), "GET", "DELETE", "PUT"))
 
 	sh := handler.SearchHandler{TaskAccess: ta}
-	http.Handle("/tasks/search", handler.CheckForAuthToken(handler.CheckMethod(handler.CheckHeaders(sh, false), "GET"), *oauth))
+	http.Handle("/tasks/search", handler.CheckMethod(handler.CheckHeaders(sh, false), "GET"))
 
 	uh := handler.UserHandler{UserAccess: ua}
-	http.Handle("/users", handler.CheckForAuthToken(handler.CheckMethod(handler.CheckHeaders(uh, true), "POST"), *oauth))
+	http.Handle("/users", handler.CheckMethod(handler.CheckHeaders(uh, true), "POST"))
 
 	http.HandleFunc("/hc", func(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusOK)
 	})
-
-	logh := handler.LoginHandler{UserAccess: ua, Oauth: oauth}
-	http.Handle("/login", handler.CheckMethod(handler.CheckHeaders(logh, true), "POST"))
 
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusNotFound)
@@ -95,41 +108,4 @@ func initAdmin(p string, e string) {
 	u := model.User{ID: "", Name: "admin", Email: e, Status: "admin"}
 	c := ua.Create(&u)
 	ua.UpdatePassword(c.ID, p)
-}
-
-func initOauth() *server.Server {
-
-	log.Println("initOauth")
-	manager := manage.NewDefaultManager()
-	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
-
-	// token store
-	manager.MustTokenStorage(store.NewMemoryTokenStore())
-
-	clientStore := store.NewClientStore()
-	err := clientStore.Set("000000", &models.Client{
-		ID:     "000000",
-		Secret: "999999",
-		Domain: "http://localhost:7056",
-	})
-	if err != nil {
-		panic(err)
-	}
-	manager.MapClientStorage(clientStore)
-
-	srv := server.NewDefaultServer(manager)
-	srv.SetAllowGetAccessRequest(true)
-	srv.SetClientInfoHandler(server.ClientFormHandler)
-	//srv.SetUserAuthorizationHandler(userAuthorizeHandler)  I THINK THIS IS FOR LOGIN...
-
-	srv.SetInternalErrorHandler(func(err error) (re *errors.Response) {
-		log.Println("Internal Error:", err.Error())
-		return
-	})
-
-	srv.SetResponseErrorHandler(func(re *errors.Response) {
-		log.Println("Response Error:", re.Error.Error())
-	})
-
-	return srv
 }

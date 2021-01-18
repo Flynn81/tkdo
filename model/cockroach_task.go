@@ -3,6 +3,8 @@ package model
 import (
 	"fmt"
 	"log"
+
+	"github.com/google/uuid"
 )
 
 //CockroachTaskAccess is a concrete strut implementing TaskAccess, backed by CockroachDB
@@ -36,11 +38,11 @@ func (ta CockroachTaskAccess) Get(id string, userID string) (*Task, error) {
 //Create takes a task without id and persists it.
 func (ta CockroachTaskAccess) Create(t *Task) *Task {
 	log.Println(t)
-	stmt, err := db.Prepare("INSERT INTO TASK (name, type, status, user_id) VALUES ($1, $2, 'new', $3)")
+	stmt, err := db.Prepare("INSERT INTO TASK (id, name, type, status, user_id) VALUES ($1, $2, $3, 'new', $4)")
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = stmt.Exec(t.Name, t.TaskType, t.UserID)
+	_, err = stmt.Exec(uuid.NewString(), t.Name, t.TaskType, t.UserID)
 	if err != nil {
 		log.Fatal(err)
 	}
