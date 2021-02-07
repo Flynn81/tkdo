@@ -1,15 +1,13 @@
 BIN_DIR := $(GOPATH)/bin
-GOMETALINTER := $(BIN_DIR)/gometalinter.exe
 COCKROACH := ./db/init.local
 
-#this needs to be tested
-localBuild: apiDocs database build dredd postman run
+localBuild: apiDocs database lint build dredd postman run
 	$(info localBuild complete)
 
-#this needs to be tested
-lint: $(GOMETALINTER)
+lint:
 	$(info running linter)
-	gometalinter ./...
+	go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.36.0
+	golangci-lint run ./... --skip-files acceptance_test.go
 
 unitTest:
 	go test -coverprofile=coverage.out
@@ -25,11 +23,6 @@ endif
 	go get github.com/cucumber/godog/cmd/godog
 	godog
 	docker exec -it tkdodb psql -U tk -d tkdo -c "$(shell cat ./db/clear_tables.sql)"
-
-#this needs to be tested
-$(GOMETALINTER):
-	go get -u github.com/alecthomas/gometalinter
-	gometalinter --install &> /dev/null
 
 database: $(COCKROACH)
 	$(info setting up database)
