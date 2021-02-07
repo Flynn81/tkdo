@@ -42,10 +42,12 @@ func (ta CockroachTaskAccess) Create(t *Task) *Task {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = stmt.Exec(uuid.NewString(), t.Name, t.TaskType, t.UserID)
+	userID := uuid.NewString()
+	_, err = stmt.Exec(userID, t.Name, t.TaskType, t.UserID)
 	if err != nil {
 		log.Fatal(err)
 	}
+	t.ID = userID
 	return t
 }
 

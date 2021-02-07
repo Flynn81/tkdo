@@ -3,6 +3,7 @@ module github.com/Flynn81/tkdo
 go 1.13
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/cucumber/godog v0.11.0
 	github.com/golangci/golangci-lint v1.36.0 // indirect
 	github.com/google/uuid v1.2.0

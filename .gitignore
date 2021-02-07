@@ -27,3 +27,4 @@ tkdo
 nohup.out
 db/init.local
 node_modules
+coverage.out

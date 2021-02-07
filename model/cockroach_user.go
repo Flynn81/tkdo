@@ -35,7 +35,7 @@ func (ua CockroachUserAccess) Get(email string) (*User, error) {
 
 //Create takes a user without an id and persists it
 func (ua CockroachUserAccess) Create(u *User) *User {
-	stmt, err := db.Prepare("INSERT INTO TASK_USER (id, name, email, status) VALUES ($1, $2, $3, $4) RETURNING ID")
+	stmt, err := db.Prepare("INSERT INTO TASK_USER (id, name, email, status) VALUES ($1, $2, $3, $4)")
 
 	if err != nil {
 		log.Fatal(err)
