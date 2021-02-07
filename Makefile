@@ -17,6 +17,13 @@ unitTest:
 coverage:
 	go tool cover -html=coverage.out
 
+godog:
+ifndef TKDO_HOST
+	$(error TKDO_HOST is not set)
+endif
+	go get github.com/cucumber/godog/cmd/godog
+	godog
+
 #this needs to be tested
 $(GOMETALINTER):
 	go get -u github.com/alecthomas/gometalinter
@@ -35,7 +42,7 @@ endif
 	$(info setting up db)
 	docker pull postgres:9.6.20
 	docker run --name tkdodb -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} -d -p 5432:5432 postgres:9.6.20
-	sleep 5
+	sleep 10
 	docker exec -it tkdodb psql -U postgres -c "CREATE ROLE tk LOGIN PASSWORD '${DB_PASSWORD}';"
 	docker exec -it tkdodb psql -U postgres -c "$(shell cat ./db/init_db.sql)"
 	docker exec -it tkdodb psql -U postgres -c "alter database tkdo owner to tk;"
@@ -72,6 +79,9 @@ run: kill
 kill:
 	$(info attempting to kill the server)
 	if pgrep tkdo; then pkill tkdo; fi
+
+reload: kill build run
+	$(info reloading local server -> kill -> build -> run)
 
 apiDocs:
 	$(info building API documentation)

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -22,16 +23,21 @@ func (uh UserHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	var u model.User
 	err := json.NewDecoder(r.Body).Decode(&u)
 	if err != nil {
+		fmt.Printf("error with create, %e", err)
 		http.Error(rw, "error with create", http.StatusInternalServerError)
 		return
 	}
+
 	newUser := uh.UserAccess.Create(&u)
+
 	var bytes []byte
 	bytes, err = json.Marshal(newUser)
 	if err != nil {
+		fmt.Printf("error with create, %e", err)
 		http.Error(rw, "error with create", http.StatusInternalServerError)
 		return
 	}
+
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 	rw.WriteHeader(http.StatusCreated)
 	_, err = rw.Write(bytes)
