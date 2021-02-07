@@ -21,8 +21,10 @@ godog:
 ifndef TKDO_HOST
 	$(error TKDO_HOST is not set)
 endif
+	docker exec -it tkdodb psql -U tk -d tkdo -c "$(shell cat ./db/clear_tables.sql)"
 	go get github.com/cucumber/godog/cmd/godog
 	godog
+	docker exec -it tkdodb psql -U tk -d tkdo -c "$(shell cat ./db/clear_tables.sql)"
 
 #this needs to be tested
 $(GOMETALINTER):
