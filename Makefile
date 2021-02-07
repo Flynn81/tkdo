@@ -10,9 +10,9 @@ lint:
 	golangci-lint run ./... --skip-files acceptance_test.go
 
 unitTest:
-	go test -coverprofile=coverage.out
+	go test -coverprofile=coverage.out ./...
 
-coverage:
+coverage: unitTest
 	go tool cover -html=coverage.out
 
 godog:
