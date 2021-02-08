@@ -23,7 +23,7 @@ func (uh UserHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	var u model.User
 	err := json.NewDecoder(r.Body).Decode(&u)
 	if err != nil {
-		fmt.Printf("error with create, %e", err)
+		fmt.Printf("error with create decoding the request body, %e", err)
 		http.Error(rw, "error with create", http.StatusInternalServerError)
 		return
 	}

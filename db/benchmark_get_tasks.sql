@@ -1,0 +1,13 @@
+DELETE FROM TASK;
+DELETE FROM TASK_USER WHERE status <> 'admin';
+INSERT INTO TASK_USER (id, name, email,status) values ('00000000-0000-0000-0000-000000000000', 'Pat Smith', 'somethingelse@something.com','status');
+INSERT INTO TASK (id, name, type, status, user_id ) values ('60853a85-681d-4620-9677-946bbfdc8fbc', 'clean the gutters', 'basic|recurring', 'new', '00000000-0000-0000-0000-000000000000');
+INSERT INTO TASK (id, name, type, status, user_id ) values ('60853a85-681d-4620-9677-946bbfdc8fb1', 'clean the gutters', 'basic|recurring', 'new', '00000000-0000-0000-0000-000000000000');
+INSERT INTO TASK (id, name, type, status, user_id ) values ('60853a85-681d-4620-9677-946bbfdc8fb2', 'clean the gutters', 'basic|recurring', 'new', '00000000-0000-0000-0000-000000000000');
+INSERT INTO TASK (id, name, type, status, user_id ) values ('60853a85-681d-4620-9677-946bbfdc8fb3', 'clean the gutters', 'basic|recurring', 'new', '00000000-0000-0000-0000-000000000000');
+INSERT INTO TASK (id, name, type, status, user_id ) values ('60853a85-681d-4620-9677-946bbfdc8fb4', 'clean the gutters', 'basic|recurring', 'new', '00000000-0000-0000-0000-000000000000');
+INSERT INTO TASK (id, name, type, status, user_id ) values ('60853a85-681d-4620-9677-946bbfdc8fb5', 'clean the gutters', 'basic|recurring', 'new', '00000000-0000-0000-0000-000000000000');
+INSERT INTO TASK (id, name, type, status, user_id ) values ('60853a85-681d-4620-9677-946bbfdc8fb6', 'clean the gutters', 'basic|recurring', 'new', '00000000-0000-0000-0000-000000000000');
+INSERT INTO TASK (id, name, type, status, user_id ) values ('60853a85-681d-4620-9677-946bbfdc8fb7', 'clean the gutters', 'basic|recurring', 'new', '00000000-0000-0000-0000-000000000000');
+INSERT INTO TASK (id, name, type, status, user_id ) values ('60853a85-681d-4620-9677-946bbfdc8fb8', 'clean the gutters', 'basic|recurring', 'new', '00000000-0000-0000-0000-000000000000');
+INSERT INTO TASK (id, name, type, status, user_id ) values ('60853a85-681d-4620-9677-946bbfdc8fb9', 'clean the gutters', 'basic|recurring', 'new', '00000000-0000-0000-0000-000000000000');

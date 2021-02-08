@@ -9,6 +9,9 @@ lint:
 	go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.36.0
 	golangci-lint run ./... --skip-files acceptance_test.go
 
+running:
+	ps -ef | grep tkdo
+
 unitTest:
 	go test -coverprofile=coverage.out ./...
 
@@ -23,6 +26,44 @@ endif
 	go get github.com/cucumber/godog/cmd/godog
 	godog
 	docker exec -it tkdodb psql -U tk -d tkdo -c "$(shell cat ./db/clear_tables.sql)"
+
+benchmarkAll: benchmarkHealthCheck benchmarkCreateUser benchmarkCreateTask benchmarkGetTasks
+	$(info running all benchmarks)
+
+benchmarkHealthCheck:
+	$(info running health check benchmark)
+	wrk -t 4 -c 10 -d 60 --latency --timeout 3s http://localhost:7056/hc
+
+benchmarkCreateUser:
+	$(info running create user benchmark)
+	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task_user;"
+	wrk -t 4 -c 10 -d 60 --latency --timeout 3s -s test/benchmark/create-user.lua http://localhost:7056/users
+	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task_user;"
+
+benchmarkCreateTask:
+	$(info running create task benchmark)
+	docker exec -it tkdodb psql -U tk -d tkdo -c "$(shell cat ./db/benchmark_create_task.sql)"
+	wrk -t 4 -c 10 -d 60 --latency --timeout 3s -s test/benchmark/create-task.lua http://localhost:7056/tasks
+	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task_user;"
+	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task;"
+
+benchmarkGetTasks:
+	$(info running get tasks benchmark)
+	docker exec -it tkdodb psql -U tk -d tkdo -c "$(shell cat ./db/benchmark_get_tasks.sql)"
+	wrk -t 4 -c 10 -d 60 --latency --timeout 3s -s test/benchmark/get-tasks.lua http://localhost:7056/tasks
+	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task_user;"
+	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task;"
+
+benchmark:
+	$(info running benchmark)
+	docker exec -it tkdodb psql -U tk -d tkdo -c "$(shell cat ./db/benchmark_get_tasks.sql)"
+	wrk -t 4 -c 10 -d 60 --latency --timeout 3s -s test/benchmark/benchmark.lua http://localhost:7056
+	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task_user;"
+	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task;"
+
+stress:
+	go get -u github.com/tsenart/vegeta
+	echo "GET http://localhost:7056/hc" | vegeta attack -duration=5s | tee results.bin | vegeta report
 
 database: $(COCKROACH)
 	$(info setting up database)
