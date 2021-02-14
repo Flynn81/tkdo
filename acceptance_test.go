@@ -17,6 +17,47 @@ import (
 var resp *http.Response
 var userID string
 
+func makeDeleteRequest(endpoint string, includeUserID bool) error {
+	host := os.Getenv(envHost)
+	url := fmt.Sprintf("http://%s:7056/%s", host, endpoint)
+
+	client := &http.Client{}
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return err
+	}
+	if includeUserID {
+		req.Header.Set("uid", userID)
+	}
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	resp, err = client.Do(req)
+	return err
+}
+
+func makePutRequest(endpoint string, includeUserID bool, v interface{}) error {
+	var err error
+	body, err := json.Marshal(v)
+
+	if err != nil {
+		return err
+	}
+
+	host := os.Getenv(envHost)
+	url := fmt.Sprintf("http://%s:7056/%s", host, endpoint)
+
+	client := &http.Client{}
+	req, err := http.NewRequest("PUT", url, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	if includeUserID {
+		req.Header.Set("uid", userID)
+	}
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	resp, err = client.Do(req)
+	return err
+}
+
 func makeGetRequest(endpoint string, includeUserID bool) error {
 	host := os.Getenv(envHost)
 
@@ -211,6 +252,107 @@ func theUserCreatesATask() error {
 	return aTaskIsCreated()
 }
 
+func multipleTasksAreReturned() error {
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("response code was %d", resp.StatusCode)
+	}
+	if resp.ContentLength == 0 {
+		return fmt.Errorf("response body empty")
+	}
+	var tasks []model.Task
+	err := json.NewDecoder(resp.Body).Decode(&tasks)
+	if err != nil {
+		return fmt.Errorf("error decoding response, %e", err)
+	}
+	if tasks == nil {
+		return fmt.Errorf("tasks is nil")
+	}
+	if len(tasks) != 5 {
+		return fmt.Errorf("tasks len = %d", len(tasks))
+	}
+	return nil
+}
+
+func theApiReturnsAnOkStatusCode() error {
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("response code was %d", resp.StatusCode)
+	}
+	if resp.ContentLength == 0 {
+		return fmt.Errorf("response body empty")
+	}
+	return nil
+}
+
+func theUserCreatesMultipleTasks() error {
+	var user model.User
+	err := json.NewDecoder(resp.Body).Decode(&user)
+	if err != nil {
+		return fmt.Errorf("error decoding response, %e, response content length %d, response code %d ", err, resp.ContentLength, resp.StatusCode)
+	}
+
+	userID = user.ID
+
+	for i := 0; i < 5; i++ {
+		err := aTaskIsCreated()
+		if err != nil {
+			return fmt.Errorf("error creating task, %e", err)
+		}
+	}
+	return nil
+
+}
+
+func theUserDeletesTheTask() error {
+	if tasksAreRequestedByTheUser() != nil {
+		return fmt.Errorf("error when requesting the tasks")
+	}
+	var tasks []model.Task
+	err := json.NewDecoder(resp.Body).Decode(&tasks)
+	if err != nil {
+		return fmt.Errorf("error decoding response, %e", err)
+	}
+	if tasks == nil {
+		return fmt.Errorf("tasks is nil")
+	}
+	if len(tasks) != 1 {
+		return fmt.Errorf("tasks len = %d", len(tasks))
+	}
+	task := tasks[0]
+
+	if err != nil {
+		return fmt.Errorf("error decoding task, %e", err)
+	}
+	return makeDeleteRequest("tasks/"+task.ID, true)
+}
+
+func theUserUpdatesTheTask() error {
+	if tasksAreRequestedByTheUser() != nil {
+		return fmt.Errorf("error when requesting the tasks")
+	}
+	var tasks []model.Task
+	err := json.NewDecoder(resp.Body).Decode(&tasks)
+	if err != nil {
+		return fmt.Errorf("error decoding response, %e", err)
+	}
+	if tasks == nil {
+		return fmt.Errorf("tasks is nil")
+	}
+	if len(tasks) != 1 {
+		return fmt.Errorf("tasks len = %d", len(tasks))
+	}
+	task := tasks[0]
+
+	if err != nil {
+		return fmt.Errorf("error decoding task, %e", err)
+	}
+	task.Name = task.Name + "-anupdate"
+	return makePutRequest("tasks/"+task.ID, true, task)
+}
+
+func thenRequestsTheirTasks() error {
+	return makeGetRequest("tasks", true)
+}
+
 func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^a (\d+) response code is returned And there is no body$`, aResponseCodeIsReturnedAndThereIsNoBody)
 	ctx.Step(`^a task is created$`, aTaskIsCreated)
@@ -228,4 +370,10 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the api is up$`, theApiIsUp)
 	ctx.Step(`^the one task is returned$`, theOneTaskIsReturned)
 	ctx.Step(`^the user creates a task$`, theUserCreatesATask)
+	ctx.Step(`^multiple tasks are returned$`, multipleTasksAreReturned)
+	ctx.Step(`^the api returns an ok status code$`, theApiReturnsAnOkStatusCode)
+	ctx.Step(`^the user creates multiple tasks$`, theUserCreatesMultipleTasks)
+	ctx.Step(`^the user deletes the task$`, theUserDeletesTheTask)
+	ctx.Step(`^the user updates the task$`, theUserUpdatesTheTask)
+	ctx.Step(`^then requests their tasks$`, thenRequestsTheirTasks)
 }
