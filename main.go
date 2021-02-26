@@ -3,10 +3,11 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"reflect"
+
+	"go.uber.org/zap"
 
 	"github.com/Flynn81/tkdo/handler"
 	"github.com/Flynn81/tkdo/model"
@@ -16,10 +17,10 @@ import (
 )
 
 func closeDB(db *sql.DB) {
-	log.Println("closing db")
+	zap.S().Infow("closing db")
 	err := db.Close()
 	if err != nil {
-		log.Println(err)
+		zap.S().Infow("%e", err)
 	}
 }
 
@@ -32,8 +33,13 @@ const (
 )
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.Println("Server startup")
+	logger, _ := zap.NewProduction()
+	defer logger.Sync() // flushes buffer, if any
+
+	undo := zap.ReplaceGlobals(logger)
+	defer undo()
+
+	zap.S().Infow("Server startup")
 
 	// - TKDO_HOST
 	// - TKDO_PORT
@@ -55,7 +61,8 @@ func main() {
 	db, err2 := sql.Open("postgres",
 		psqlInfo)
 	if err2 != nil {
-		log.Fatal("error connecting to the database: ", err2)
+		zap.S().Infow("error connecting to the database: ", err2)
+		panic(err2)
 	}
 	model.Init(db)
 	defer closeDB(db)
@@ -94,13 +101,13 @@ func main() {
 	})
 
 	v := reflect.ValueOf(http.DefaultServeMux).Elem()
-	fmt.Printf("routes: %v\n", v.FieldByName("m"))
+	zap.S().Infow("routes: %v\n", v.FieldByName("m"))
 
 	err := http.ListenAndServe(":7056", handlers.LoggingHandler(os.Stdout, http.DefaultServeMux)) //todo: make port env var
 	if err != nil {
 		panic(err)
 	}
-	log.Println("Server shutdown")
+	zap.S().Infow("Server shutdown")
 }
 
 func initAdmin(p string, e string) {

@@ -2,8 +2,9 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
+
+	"go.uber.org/zap"
 
 	"github.com/Flynn81/tkdo/model"
 )
@@ -26,7 +27,7 @@ func CheckMethod(h http.Handler, methods ...string) http.Handler {
 func CheckHeaders(h http.Handler, u bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Content-Type") != "application/json; charset=utf-8" {
-			fmt.Println("content-type not accepted")
+			zap.S().Infow("content-type not accepted")
 			http.Error(w, "content-type not accepted", http.StatusBadRequest)
 			return
 		} else if !u && r.Header.Get("uid") == "" { //todo look up valid uids from an in memory cache

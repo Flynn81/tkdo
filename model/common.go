@@ -2,7 +2,8 @@ package model
 
 import (
 	"database/sql"
-	"log"
+
+	"go.uber.org/zap"
 )
 
 //Error is a struct used for relaying error messages back to callers of the api
@@ -20,6 +21,6 @@ func Init(d *sql.DB) {
 func closeRows(r *sql.Rows) {
 	err := r.Close()
 	if err != nil {
-		log.Print(err)
+		zap.S().Infow("%e", err)
 	}
 }
