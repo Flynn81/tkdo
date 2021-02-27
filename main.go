@@ -27,9 +27,11 @@ func closeDB(db *sql.DB) {
 const (
 	envHost     = "TKDO_HOST"
 	envPort     = "TKDO_PORT"
+	envDbPort   = "TKDO_DB_PORT"
 	envUser     = "TKDO_USER"
 	envPassword = "TKDO_PASSWORD"
 	envDbName   = "TKDO_DBNAME"
+	defaultPort = "7056"
 )
 
 func main() {
@@ -50,17 +52,22 @@ func main() {
 	//TODO: add some validation
 	host := os.Getenv(envHost)
 	port := os.Getenv(envPort)
+	if len(port) == 0 {
+		port = defaultPort
+	}
+	dbPort := os.Getenv(envDbPort)
 	user := os.Getenv(envUser)
 	password := os.Getenv(envPassword)
 	dbname := os.Getenv(envDbName)
 	zap.S().Infof("%s:%s", envHost, host)
 	zap.S().Infof("%s:%s", envPort, port)
+	zap.S().Infof("%s:%s", envDbPort, dbPort)
 	zap.S().Infof("%s:%s", envUser, user)
 	zap.S().Infof("%s:%s", envDbName, dbname)
 
 	var err2 error
 
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, dbPort, user, password, dbname)
 
 	db, err2 := sql.Open("postgres",
 		psqlInfo)
@@ -109,7 +116,7 @@ func main() {
 
 	zap.S().Infof("routes: %v\n", v.FieldByName("m"))
 
-	err := http.ListenAndServe(":7056", handlers.LoggingHandler(os.Stdout, http.DefaultServeMux)) //todo: make port env var
+	err := http.ListenAndServe(fmt.Sprintf(":%s", port), handlers.LoggingHandler(os.Stdout, http.DefaultServeMux)) //todo: make port env var
 	if err != nil {
 		zap.S().Infof("We are panicked: %e", err)
 		panic(err)
