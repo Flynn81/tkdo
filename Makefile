@@ -1,7 +1,7 @@
 BIN_DIR := $(GOPATH)/bin
 COCKROACH := ./db/init.local
 
-localBuild: apiDocs database lint build dredd postman run
+localBuild: apiDocs database lint unitTest build dredd postman godog run
 	$(info localBuild complete)
 
 lint:
