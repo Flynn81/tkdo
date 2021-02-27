@@ -56,8 +56,6 @@ func (sh SearchHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	n := r.URL.Query().Get("name")
 	t := r.URL.Query().Get("type")
 
-	//TODO pagination
-
 	if n[0] == "'"[0] {
 		n = n[1 : len(n)-1]
 	}
