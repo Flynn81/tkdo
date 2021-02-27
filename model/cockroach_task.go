@@ -27,7 +27,8 @@ func (ta CockroachTaskAccess) Get(id string, userID string) (*Task, error) {
 	if rows.Next() {
 		err := rows.Scan(&i, &n, &t, &s, &u)
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
+			return nil, err
 		}
 		return &Task{i, n, t, s, u}, nil
 	}
@@ -40,12 +41,14 @@ func (ta CockroachTaskAccess) Create(t *Task) *Task {
 	log.Println(t)
 	stmt, err := db.Prepare("INSERT INTO TASK (id, name, type, status, user_id) VALUES ($1, $2, $3, 'new', $4)")
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return nil
 	}
 	userID := uuid.NewString()
 	_, err = stmt.Exec(userID, t.Name, t.TaskType, t.UserID)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return nil
 	}
 	t.ID = userID
 	return t
@@ -55,12 +58,12 @@ func (ta CockroachTaskAccess) Create(t *Task) *Task {
 func (ta CockroachTaskAccess) Update(task *Task) bool {
 	stmt, err := db.Prepare("UPDATE TASK SET name=$1, type=$2, status=$3 WHERE id = $4 and user_id = $5")
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		return false
 	}
 	_, err = stmt.Exec(task.Name, task.TaskType, task.Status, task.ID, task.UserID)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		return false
 	}
 	return true
@@ -70,12 +73,12 @@ func (ta CockroachTaskAccess) Update(task *Task) bool {
 func (ta CockroachTaskAccess) Delete(id string, userID string) bool {
 	stmt, err := db.Prepare("DELETE FROM TASK WHERE id = $1 and user_id = $2")
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		return false
 	}
 	_, err = stmt.Exec(id, userID)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 		return false
 	}
 	return true
@@ -100,7 +103,8 @@ func (ta CockroachTaskAccess) GetMany(keyword string, taskType string, userID st
 	fmt.Println("q is ", q)
 	var r = []*Task{}
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return nil
 	}
 	defer closeRows(rows)
 	var (
@@ -109,7 +113,8 @@ func (ta CockroachTaskAccess) GetMany(keyword string, taskType string, userID st
 	for rows.Next() {
 		err := rows.Scan(&i, &n, &t, &s, &u)
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
+			return nil
 		}
 		r = append(r, &Task{i, n, t, s, u})
 	}
@@ -130,7 +135,8 @@ func (ta CockroachTaskAccess) List(page int, pageSize int, userID string) []*Tas
 	rows, err := db.Query("select id, name, type, status, user_id from task where user_id = $1", userID)
 	var r = []*Task{}
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return nil
 	}
 	defer closeRows(rows)
 	var (
@@ -140,7 +146,8 @@ func (ta CockroachTaskAccess) List(page int, pageSize int, userID string) []*Tas
 	for rows.Next() {
 		err := rows.Scan(&i, &n, &t, &s, &u)
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
+			return nil
 		}
 		log.Println("id is ", i)
 		if rownum >= page*pageSize && rownum < page*pageSize+pageSize {

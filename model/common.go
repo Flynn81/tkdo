@@ -20,6 +20,6 @@ func Init(d *sql.DB) {
 func closeRows(r *sql.Rows) {
 	err := r.Close()
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 }
