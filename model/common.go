@@ -21,6 +21,6 @@ func Init(d *sql.DB) {
 func closeRows(r *sql.Rows) {
 	err := r.Close()
 	if err != nil {
-		zap.S().Infow("%e", err)
+		zap.S().Infof("%e", err)
 	}
 }

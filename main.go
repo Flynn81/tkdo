@@ -17,10 +17,10 @@ import (
 )
 
 func closeDB(db *sql.DB) {
-	zap.S().Infow("closing db")
+	zap.S().Info("closing db")
 	err := db.Close()
 	if err != nil {
-		zap.S().Infow("%e", err)
+		zap.S().Infof("%e", err)
 	}
 }
 
@@ -39,7 +39,7 @@ func main() {
 	undo := zap.ReplaceGlobals(logger)
 	defer undo()
 
-	zap.S().Infow("Server startup")
+	zap.S().Info("Server startup")
 
 	// - TKDO_HOST
 	// - TKDO_PORT
@@ -53,6 +53,10 @@ func main() {
 	user := os.Getenv(envUser)
 	password := os.Getenv(envPassword)
 	dbname := os.Getenv(envDbName)
+	zap.S().Infof("%s:%s", envHost, host)
+	zap.S().Infof("%s:%s", envPort, port)
+	zap.S().Infof("%s:%s", envUser, user)
+	zap.S().Infof("%s:%s", envDbName, dbname)
 
 	var err2 error
 
@@ -61,7 +65,7 @@ func main() {
 	db, err2 := sql.Open("postgres",
 		psqlInfo)
 	if err2 != nil {
-		zap.S().Infow("error connecting to the database: ", err2)
+		zap.S().Infof("error connecting to the database: %s", err2)
 		panic(err2)
 	}
 	model.Init(db)
@@ -96,18 +100,21 @@ func main() {
 		rw.WriteHeader(http.StatusNotFound)
 		_, err := fmt.Fprint(rw, "these aren't the droids you're looking for")
 		if err != nil {
+			zap.S().Infof("We are panicked: %e", err)
 			panic(err)
 		}
 	})
 
 	v := reflect.ValueOf(http.DefaultServeMux).Elem()
-	zap.S().Infow("routes: %v\n", v.FieldByName("m"))
+
+	zap.S().Infof("routes: %v\n", v.FieldByName("m"))
 
 	err := http.ListenAndServe(":7056", handlers.LoggingHandler(os.Stdout, http.DefaultServeMux)) //todo: make port env var
 	if err != nil {
+		zap.S().Infof("We are panicked: %e", err)
 		panic(err)
 	}
-	zap.S().Infow("Server shutdown")
+	zap.S().Info("Server shutdown")
 }
 
 func initAdmin(p string, e string) {

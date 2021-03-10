@@ -23,7 +23,7 @@ func (uh UserHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	var u model.User
 	err := json.NewDecoder(r.Body).Decode(&u)
 	if err != nil {
-		zap.S().Infow("error with create decoding the request body, %e", err)
+		zap.S().Infof("error with create decoding the request body, %e", err)
 		http.Error(rw, "error with create", http.StatusInternalServerError)
 		return
 	}
@@ -33,7 +33,7 @@ func (uh UserHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	var bytes []byte
 	bytes, err = json.Marshal(newUser)
 	if err != nil {
-		zap.S().Infow("error with create, %e", err)
+		zap.S().Infof("error with create, %e", err)
 		http.Error(rw, "error with create", http.StatusInternalServerError)
 		return
 	}
@@ -42,6 +42,7 @@ func (uh UserHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(http.StatusCreated)
 	_, err = rw.Write(bytes)
 	if err != nil {
+		zap.S().Infof("We are panicked: %e", err)
 		panic(err)
 	}
 }
@@ -74,6 +75,7 @@ func (sh SearchHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	_, err = rw.Write(bytes)
 	if err != nil {
+		zap.S().Infof("We are panicked: %e", err)
 		panic(err)
 	}
 }
@@ -119,6 +121,7 @@ func getTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 	_, err = rw.Write(bytes)
 
 	if err != nil {
+		zap.S().Infof("We are panicked: %e", err)
 		panic(err)
 	}
 }
@@ -149,6 +152,7 @@ func updateTask(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		_, err = rw.Write(bytes)
 		if err != nil {
+			zap.S().Infof("We are panicked: %e", err)
 			panic(err)
 		}
 	} else {

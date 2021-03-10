@@ -27,7 +27,7 @@ func CheckMethod(h http.Handler, methods ...string) http.Handler {
 func CheckHeaders(h http.Handler, u bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Content-Type") != "application/json; charset=utf-8" {
-			zap.S().Infow("content-type not accepted")
+			zap.S().Info("content-type not accepted")
 			http.Error(w, "content-type not accepted", http.StatusBadRequest)
 			return
 		} else if !u && r.Header.Get("uid") == "" { //todo look up valid uids from an in memory cache
@@ -35,10 +35,12 @@ func CheckHeaders(h http.Handler, u bool) http.Handler {
 			w.WriteHeader(http.StatusUnauthorized)
 			bytes, err := json.Marshal(model.Error{Msg: "invalid uid"})
 			if err != nil {
+				zap.S().Infof("We are panicked: %e", err)
 				panic(err)
 			}
 			_, err = w.Write(bytes)
 			if err != nil {
+				zap.S().Infof("We are panicked: %e", err)
 				panic(err)
 			}
 			return
