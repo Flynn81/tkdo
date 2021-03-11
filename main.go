@@ -49,7 +49,6 @@ func main() {
 	// - TKDO_PASSWORD
 	// - TKDO_DBNAME
 
-	//TODO: add some validation
 	host := os.Getenv(envHost)
 	port := os.Getenv(envPort)
 	if len(port) == 0 {
@@ -116,7 +115,7 @@ func main() {
 
 	zap.S().Infof("routes: %v\n", v.FieldByName("m"))
 
-	err := http.ListenAndServe(fmt.Sprintf(":%s", port), handlers.LoggingHandler(os.Stdout, http.DefaultServeMux)) //todo: make port env var
+	err := http.ListenAndServe(fmt.Sprintf(":%s", port), handlers.LoggingHandler(os.Stdout, http.DefaultServeMux))
 	if err != nil {
 		zap.S().Infof("We are panicked: %e", err)
 		panic(err)
