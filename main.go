@@ -7,11 +7,11 @@ import (
 	"os"
 	"reflect"
 
+	"github.com/felixge/httpsnoop"
 	"go.uber.org/zap"
 
 	"github.com/Flynn81/tkdo/handler"
 	"github.com/Flynn81/tkdo/model"
-	"github.com/gorilla/handlers"
 
 	_ "github.com/lib/pq"
 )
@@ -115,7 +115,19 @@ func main() {
 
 	zap.S().Infof("routes: %v\n", v.FieldByName("m"))
 
-	err := http.ListenAndServe(fmt.Sprintf(":%s", port), handlers.LoggingHandler(os.Stdout, http.DefaultServeMux))
+	wrappedH := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		m := httpsnoop.CaptureMetrics(http.DefaultServeMux, w, r)
+		zap.S().Infof(
+			"%s %s (code=%d dt=%s written=%d)",
+			r.Method,
+			r.URL,
+			m.Code,
+			m.Duration,
+			m.Written,
+		)
+	})
+
+	err := http.ListenAndServe(fmt.Sprintf(":%s", port), wrappedH) //todo: make port env var
 	if err != nil {
 		zap.S().Infof("We are panicked: %e", err)
 		panic(err)

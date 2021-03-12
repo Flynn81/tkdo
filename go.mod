@@ -7,6 +7,7 @@ require (
 	github.com/alecthomas/gocyclo v0.0.0-20150208221726-aa8f8b160214 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20200825124411-48ed595a09d2 // indirect
 	github.com/cucumber/godog v0.11.0
+	github.com/felixge/httpsnoop v1.0.1
 	github.com/golangci/golangci-lint v1.36.0 // indirect
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/handlers v1.5.1
