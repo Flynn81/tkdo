@@ -36,7 +36,10 @@ const (
 
 func main() {
 	logger, _ := zap.NewProduction()
-	defer logger.Sync() // flushes buffer, if any
+	// defer el := logger.Sync() // flushes buffer, if any
+	// if el != nil {
+	// 	panic(el)
+	// }
 
 	undo := zap.ReplaceGlobals(logger)
 	defer undo()
