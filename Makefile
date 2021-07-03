@@ -1,6 +1,9 @@
 BIN_DIR := $(GOPATH)/bin
 COCKROACH := ./db/init.local
 
+everything: localBuild benchmarkAll stress
+	$(info running everything)
+
 localBuild: apiDocs database lint unitTest build dredd postman godog run
 	$(info localBuild complete)
 
