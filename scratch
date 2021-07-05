@@ -1,0 +1,7 @@
+export TKDO_HOST=localhost
+export TKDO_PORT=7056
+export TKDO_USE=tk
+export TKDO_PASSWORD=password
+export TKDO_DBNAME=tkdo
+export POSTGRES_PASSWORD=password
+export DB_PASSWORD=password

@@ -1,50 +1,46 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
 	"reflect"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 
 	"github.com/felixge/httpsnoop"
 	"go.uber.org/zap"
 
 	"github.com/Flynn81/tkdo/handler"
 	"github.com/Flynn81/tkdo/model"
-
-	_ "github.com/lib/pq"
 )
 
-func closeDB(db *sql.DB) {
-	zap.S().Info("closing db")
-	err := db.Close()
-	if err != nil {
-		zap.S().Infof("%e", err)
-	}
-}
-
 const (
-	envHost     = "TKDO_HOST"
-	envPort     = "TKDO_PORT"
-	envDbPort   = "TKDO_DB_PORT"
-	envUser     = "TKDO_USER"
-	envPassword = "TKDO_PASSWORD"
+	envHost   = "TKDO_HOST"
+	envPort   = "TKDO_PORT"
+	envDbPort = "TKDO_DB_PORT"
+	envUser   = "TKDO_USER"
 	envDbName   = "TKDO_DBNAME"
 	defaultPort = "7056"
 )
 
 func main() {
 	logger, _ := zap.NewProduction()
-	// defer el := logger.Sync() // flushes buffer, if any
-	// if el != nil {
-	// 	panic(el)
-	// }
+	//defer logger.Sync() // flushes buffer, if any
 
 	undo := zap.ReplaceGlobals(logger)
 	defer undo()
 
 	zap.S().Info("Server startup")
+
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+
+	// Create DynamoDB client
+	svc := dynamodb.New(sess, &aws.Config{Endpoint: aws.String("http://localhost:8000")})
 
 	// - TKDO_HOST
 	// - TKDO_PORT
@@ -59,7 +55,6 @@ func main() {
 	}
 	dbPort := os.Getenv(envDbPort)
 	user := os.Getenv(envUser)
-	password := os.Getenv(envPassword)
 	dbname := os.Getenv(envDbName)
 	zap.S().Infof("%s:%s", envHost, host)
 	zap.S().Infof("%s:%s", envPort, port)
@@ -67,18 +62,8 @@ func main() {
 	zap.S().Infof("%s:%s", envUser, user)
 	zap.S().Infof("%s:%s", envDbName, dbname)
 
-	var err2 error
 
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, dbPort, user, password, dbname)
-
-	db, err2 := sql.Open("postgres",
-		psqlInfo)
-	if err2 != nil {
-		zap.S().Infof("error connecting to the database: %s", err2)
-		panic(err2)
-	}
-	model.Init(db)
-	defer closeDB(db)
+	model.Init(svc)
 
 	argsWithoutProg := os.Args[1:]
 	if len(argsWithoutProg) == 3 && argsWithoutProg[0] == "admin" {
@@ -139,8 +124,10 @@ func main() {
 }
 
 func initAdmin(p string, e string) {
-	ua := model.CockroachUserAccess{}
-	u := model.User{ID: "", Name: "admin", Email: e, Status: "admin"}
-	c := ua.Create(&u)
-	ua.UpdatePassword(c.ID, p)
+	//TODO: fill this in or remove
+	//return
+	// ua := model.CockroachUserAccess{}
+	// u := model.User{Name: "admin", Email: e, Status: "admin"}
+	// c := ua.Create(&u)
+	// ua.UpdatePassword(c.Email, p)
 }
