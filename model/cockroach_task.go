@@ -1,11 +1,14 @@
 package model
 
 import (
-	"fmt"
+	"github.com/google/uuid"
 
 	"go.uber.org/zap"
 
-	"github.com/google/uuid"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
 
 //CockroachTaskAccess is a concrete strut implementing TaskAccess, backed by CockroachDB
@@ -15,68 +18,118 @@ type CockroachTaskAccess struct {
 //Get returns an task given an id.
 func (ta CockroachTaskAccess) Get(id string, userID string) (*Task, error) {
 
-	rows, err := db.Query("select id, name, type, status, user_id from task where id = $1 and user_id = $2", id, userID)
+	output, err := db.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String("task"),
+		Key: map[string]*dynamodb.AttributeValue{
+			"id": {
+				S: aws.String(id),
+			},
+		},
+	})
+
 	if err != nil {
 		zap.S().Infof("%e", err)
 		return nil, err
 	}
-	defer closeRows(rows)
 
-	var (
-		i, n, t, s, u string
-	)
-	if rows.Next() {
-		err := rows.Scan(&i, &n, &t, &s, &u)
-		if err != nil {
-			zap.S().Infof("%e", err)
-			return nil, err
-		}
-		return &Task{i, n, t, s, u}, nil
+	if output.Item == nil {
+		zap.S().Infof("could not find task for %v", id)
+		return nil, nil
 	}
 
-	return nil, fmt.Errorf("task with id %v cannot be found", id)
+	task := Task{}
+
+	err = dynamodbattribute.UnmarshalMap(output.Item, &task)
+
+	if err != nil {
+		zap.S().Infof("%e", err)
+		return nil, err
+	}
+
+	return &task, nil
 }
 
-//Create takes a task without id and persists it.
+//Create takes a task
 func (ta CockroachTaskAccess) Create(t *Task) *Task {
-	stmt, err := db.Prepare("INSERT INTO TASK (id, name, type, status, user_id) VALUES ($1, $2, $3, 'new', $4)")
+
+	//t.ID = t.Name + t.UserID + strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)
+	t.ID = uuid.NewString()
+	//TODO: set an id in t
+	zap.S().Infof("creating a new task for user ID %v", t.UserID)
+	av, err := dynamodbattribute.MarshalMap(&t)
 	if err != nil {
 		zap.S().Infof("%e", err)
 		return nil
 	}
-	userID := uuid.NewString()
-	_, err = stmt.Exec(userID, t.Name, t.TaskType, t.UserID)
+	tableName := "task"
+	input := &dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String(tableName),
+	}
+
+	_, err = db.PutItem(input)
 	if err != nil {
 		zap.S().Infof("%e", err)
 		return nil
 	}
-	t.ID = userID
 	return t
+
 }
 
 //Update takes a task and attempt to update it
 func (ta CockroachTaskAccess) Update(task *Task) bool {
-	stmt, err := db.Prepare("UPDATE TASK SET name=$1, type=$2, status=$3 WHERE id = $4 and user_id = $5")
-	if err != nil {
-		zap.S().Infof("%e", err)
-		return false
+
+	tableName := "task"
+
+	input := &dynamodb.UpdateItemInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":n": {
+				S: aws.String(task.Name),
+			},
+			":s": {
+				S: aws.String(task.Status),
+			},
+			":t": {
+				S: aws.String(task.TaskType),
+			},
+		},
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			"id": {
+				S: aws.String(task.ID),
+			},
+		},
+		ExpressionAttributeNames: map[string]*string{
+			"#c": aws.String("name"),
+			"#s": aws.String("status"),
+		},
+		ReturnValues:     aws.String(dynamodb.ReturnValueNone),
+		UpdateExpression: aws.String("set #c = :n, #s = :s, taskType = :t"),
 	}
-	_, err = stmt.Exec(task.Name, task.TaskType, task.Status, task.ID, task.UserID)
+	_, err := db.UpdateItem(input)
 	if err != nil {
 		zap.S().Infof("%e", err)
 		return false
 	}
 	return true
+
 }
 
 //Delete takes an id and attempts to delete the task with the id
 func (ta CockroachTaskAccess) Delete(id string, userID string) bool {
-	stmt, err := db.Prepare("DELETE FROM TASK WHERE id = $1 and user_id = $2")
-	if err != nil {
-		zap.S().Infof("%e", err)
-		return false
+
+	tableName := "task"
+
+	input := &dynamodb.DeleteItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"id": {
+				S: aws.String(id),
+			},
+		},
+		TableName: aws.String(tableName),
 	}
-	_, err = stmt.Exec(id, userID)
+
+	_, err := db.DeleteItem(input)
 	if err != nil {
 		zap.S().Infof("%e", err)
 		return false
@@ -87,71 +140,107 @@ func (ta CockroachTaskAccess) Delete(id string, userID string) bool {
 //GetMany returns tasks matching the given string and/or task type
 func (ta CockroachTaskAccess) GetMany(keyword string, taskType string, userID string) []*Task {
 
-	q := "select id, name, type, status, user_id from task"
+	zap.S().Info("making a list request")
+
 	if keyword == "" && taskType == "" {
 		return nil
 	}
-	q = q + " where user_id = $1 "
-	if keyword != "" {
-		q = q + " and name LIKE '%" + keyword + "%'"
-	}
-	if taskType != "" {
-		q = q + " and type = '" + taskType + "'"
-	}
-	rows, err := db.Query(q, userID)
-	var r = []*Task{}
+
+	//TODO: smarter expression to do paging in the request to dynamodb
+	tableName := "task"
+
+	filt := expression.Contains(expression.Name("name"), keyword)
+
+	proj := expression.NamesList(expression.Name("id"), expression.Name("userId"), expression.Name("name"), expression.Name("taskType"), expression.Name("status"))
+
+	expr, err := expression.NewBuilder().WithFilter(filt).WithProjection(proj).Build()
 	if err != nil {
 		zap.S().Infof("%e", err)
 		return nil
 	}
-	defer closeRows(rows)
-	var (
-		i, n, t, s, u string
-	)
-	for rows.Next() {
-		err := rows.Scan(&i, &n, &t, &s, &u)
+
+	params := &dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		ProjectionExpression:      expr.Projection(),
+		TableName:                 aws.String(tableName),
+	}
+
+	result, err := db.Scan(params)
+	if err != nil {
+		zap.S().Infof("%e", err)
+		return nil
+	}
+
+	var r = []*Task{}
+
+	for _, i := range result.Items {
+		t := Task{}
+		err = dynamodbattribute.UnmarshalMap(i, &t)
 		if err != nil {
 			zap.S().Infof("%e", err)
 			return nil
 		}
-		r = append(r, &Task{i, n, t, s, u})
+		r = append(r, &t)
 	}
 	return r
 }
 
-//List returns a list of tasks
-func (ta CockroachTaskAccess) List(page int, pageSize int, userID string) []*Task {
-	zap.S().Infof("task length is %v", len(tasks))
-	zap.S().Infof("page size is %v", pageSize)
-	zap.S().Infof("page is %v", page)
-	m := (page * pageSize) + pageSize
-	if m > len(tasks) {
-		m = len(tasks)
-	}
-	zap.S().Infof("m is %s", m)
-
-	rows, err := db.Query("select id, name, type, status, user_id from task where user_id = $1", userID)
-	var r = []*Task{}
+func getPageOfTasks(page int, pageSize int, currentPage int, params *dynamodb.ScanInput) []*Task {
+	result, err := db.Scan(params)
 	if err != nil {
 		zap.S().Infof("%e", err)
 		return nil
 	}
-	defer closeRows(rows)
-	var (
-		i, n, t, s, u string
-	)
-	rownum := 0
-	for rows.Next() {
-		err := rows.Scan(&i, &n, &t, &s, &u)
-		if err != nil {
-			zap.S().Infof("%e", err)
-			return nil
+
+	//zap.S().Info(result.LastEvaluatedKey)
+
+	if len(result.Items) <= pageSize*page || currentPage == page || len(result.LastEvaluatedKey) == 0 {
+		var r = []*Task{}
+
+		zap.S().Infof("return size %v, last evaluated key: %v", len(result.Items), result.LastEvaluatedKey)
+
+		for _, i := range result.Items {
+			t := Task{}
+			err = dynamodbattribute.UnmarshalMap(i, &t)
+			if err != nil {
+				zap.S().Infof("%e", err)
+				return nil
+			}
+			r = append(r, &t)
 		}
-		zap.S().Infof("id is ", i)
-		if rownum >= page*pageSize && rownum < page*pageSize+pageSize {
-			r = append(r, &Task{i, n, t, s, u})
-		}
-		rownum++
+		return r
 	}
-	return r
+
+	params.ExclusiveStartKey = result.LastEvaluatedKey
+
+	return getPageOfTasks(page, pageSize, currentPage+1, params)
+}
+
+//List returns a list of tasks
+func (ta CockroachTaskAccess) List(page int, pageSize int, userID string) []*Task {
+	zap.S().Info("making a list request")
+	zap.S().Infof("page, pageSize, userID: %v, %v, %v", page, pageSize, userID)
+
+	tableName := "task"
+	filt := expression.Name("userId").Equal(expression.Value(userID))
+
+	proj := expression.NamesList(expression.Name("id"), expression.Name("userId"), expression.Name("name"), expression.Name("taskType"), expression.Name("status"))
+
+	expr, err := expression.NewBuilder().WithFilter(filt).WithProjection(proj).Build()
+	if err != nil {
+		zap.S().Infof("%e", err)
+		return nil
+	}
+
+	params := &dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		ProjectionExpression:      expr.Projection(),
+		TableName:                 aws.String(tableName),
+	}
+
+	return getPageOfTasks(page, pageSize, 1, params)
 }

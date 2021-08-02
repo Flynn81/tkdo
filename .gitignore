@@ -29,3 +29,4 @@ db/init.local
 node_modules
 coverage.out
 results.bin
+db/docker/dynamodb/shared-local-instance.db

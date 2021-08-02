@@ -1,7 +1,5 @@
 package model
 
-var tasks []*Task
-
 //Task represents the data structure for a task
 type Task struct {
 	ID       string `json:"id"`

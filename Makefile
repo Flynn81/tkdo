@@ -6,7 +6,7 @@ buildbot: apiDocs lint unitTest build dredd postman godog run
 everything: localBuild benchmarkAll stress
 	$(info running everything)
 
-localBuild: apiDocs database lint unitTest build dredd postman godog run
+localBuild: apiDocs tearDownDb database lint unitTest build dredd postman godog run
 	$(info localBuild complete)
 
 lint:
@@ -27,10 +27,8 @@ godog:
 ifndef TKDO_HOST
 	$(error TKDO_HOST is not set)
 endif
-	docker exec -it tkdodb psql -U tk -d tkdo -c "$(shell cat ./db/clear_tables.sql)"
 	go get github.com/cucumber/godog/cmd/godog
 	godog
-	docker exec -it tkdodb psql -U tk -d tkdo -c "$(shell cat ./db/clear_tables.sql)"
 
 benchmarkAll: benchmarkHealthCheck benchmarkCreateUser benchmarkCreateTask benchmarkGetTasks
 	$(info running all benchmarks)
@@ -41,30 +39,19 @@ benchmarkHealthCheck:
 
 benchmarkCreateUser:
 	$(info running create user benchmark)
-	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task_user;"
 	wrk -t 4 -c 10 -d 60 --latency --timeout 3s -s test/benchmark/create-user.lua http://localhost:7056/users
-	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task_user;"
 
 benchmarkCreateTask:
 	$(info running create task benchmark)
-	docker exec -it tkdodb psql -U tk -d tkdo -c "$(shell cat ./db/benchmark_create_task.sql)"
 	wrk -t 4 -c 10 -d 60 --latency --timeout 3s -s test/benchmark/create-task.lua http://localhost:7056/tasks
-	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task_user;"
-	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task;"
 
 benchmarkGetTasks:
 	$(info running get tasks benchmark)
-	docker exec -it tkdodb psql -U tk -d tkdo -c "$(shell cat ./db/benchmark_get_tasks.sql)"
 	wrk -t 4 -c 10 -d 60 --latency --timeout 3s -s test/benchmark/get-tasks.lua http://localhost:7056/tasks
-	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task_user;"
-	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task;"
 
 benchmark:
 	$(info running benchmark)
-	docker exec -it tkdodb psql -U tk -d tkdo -c "$(shell cat ./db/benchmark_get_tasks.sql)"
 	wrk -t 4 -c 10 -d 60 --latency --timeout 3s -s test/benchmark/benchmark.lua http://localhost:7056
-	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task_user;"
-	docker exec -it tkdodb psql -U tk -d tkdo -c "delete from task;"
 
 stress:
 	go get -u github.com/tsenart/vegeta
@@ -72,30 +59,37 @@ stress:
 
 database: $(COCKROACH)
 	$(info setting up database)
+	cd db; docker-compose up -d;
+	AWS_ACCESS_KEY_ID=X AWS_SECRET_ACCESS_KEY=X aws dynamodb list-tables --endpoint-url http://localhost:8000 --region x
+	AWS_ACCESS_KEY_ID=X AWS_SECRET_ACCESS_KEY=X aws dynamodb create-table \
+    --table-name user \
+    --attribute-definitions \
+				AttributeName=email,AttributeType=S \
+    --key-schema \
+        AttributeName=email,KeyType=HASH \
+--provisioned-throughput \
+        ReadCapacityUnits=10,WriteCapacityUnits=5 --region x --endpoint-url http://localhost:8000
+	AWS_ACCESS_KEY_ID=X AWS_SECRET_ACCESS_KEY=X aws dynamodb create-table \
+    --table-name task \
+    --attribute-definitions \
+				AttributeName=id,AttributeType=S \
+    --key-schema \
+				AttributeName=id,KeyType=HASH \
+--provisioned-throughput \
+        ReadCapacityUnits=10,WriteCapacityUnits=5 --region x --endpoint-url http://localhost:8000
 
 $(COCKROACH):
-ifndef POSTGRES_PASSWORD
-	$(error POSTGRES_PASSWORD is not set)
-endif
-ifndef DB_PASSWORD
-		$(error DB_PASSWORD is not set)
-endif
 	$(info setting up db)
-	docker pull postgres:9.6.20
-	docker run --name tkdodb -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} -d -p 5432:5432 postgres:9.6.20
-	sleep 10
-	docker exec -it tkdodb psql -U postgres -c "CREATE ROLE tk LOGIN PASSWORD '${DB_PASSWORD}';"
-	docker exec -it tkdodb psql -U postgres -c "$(shell cat ./db/init_db.sql)"
-	docker exec -it tkdodb psql -U postgres -c "alter database tkdo owner to tk;"
-	docker exec -it tkdodb psql -U tk -d tkdo -c "$(shell cat ./db/init_tables.sql)"
-	go get -u github.com/lib/pq
 	touch ./db/init.local
 
 tearDownDb:
-	docker stop tkdodb
-	docker rm tkdodb
 	rm ./db/init.local
 	unset SQL
+	AWS_ACCESS_KEY_ID=X AWS_SECRET_ACCESS_KEY=X aws dynamodb delete-table \
+    --table-name user --region x --endpoint-url http://localhost:8000
+	AWS_ACCESS_KEY_ID=X AWS_SECRET_ACCESS_KEY=X aws dynamodb delete-table \
+    --table-name task --region x --endpoint-url http://localhost:8000
+	cd db; docker-compose down;
 
 build:
 	$(info building)
@@ -103,15 +97,19 @@ build:
 
 dredd: run
 	$(info running dredd)
-	docker exec -it tkdodb psql -U postgres -d tkdo -c "$(shell cat ./db/dredd_data_init.sql)"
+	AWS_ACCESS_KEY_ID=X AWS_SECRET_ACCESS_KEY=X aws dynamodb put-item \
+    --table-name user \
+    --item '{"id": {"S":"00000000-0000-0000-0000-000000000000"},"name": {"S":"Pat Smith"},"email": {"S":"somethingelse@something.com"},"status": {"S":"status"}}'\
+		--return-consumed-capacity TOTAL --region x --endpoint-url http://localhost:8000
+	AWS_ACCESS_KEY_ID=X AWS_SECRET_ACCESS_KEY=X aws dynamodb put-item \
+	    --table-name task \
+	    --item '{"id": {"S":"60853a85-681d-4620-9677-946bbfdc8fbc"},"name": {"S":"clean the gutters"},"taskType": {"S":"basic|recurring"},"status": {"S":"new"},"userId":{"S":"00000000-0000-0000-0000-000000000000"}}'\
+			--return-consumed-capacity TOTAL --region x --endpoint-url http://localhost:8000
 	dredd docs/tkdo.apib http://localhost:7056/
-	docker exec -it tkdodb psql -U postgres -d tkdo -c "DELETE FROM TASK; DELETE FROM TASK_USER;"
 
 postman: run
 	$(info running postman)
-	docker exec -it tkdodb psql -U postgres -d tkdo -c "$(shell cat ./db/postman_data_init.sql)"
 	newman run TKDO.postman_collection.json -e local-env.postman_environment.json
-	docker exec -it tkdodb psql -U postgres -d tkdo -c "DELETE FROM TASK; DELETE FROM TASK_USER;"
 
 run: kill
 	$(info running the server)
@@ -131,7 +129,6 @@ apiDocs:
 #this needs to be tested
 delAdmin:
 	$(info deleting admin users)
-	docker exec -it roach1 ./cockroach sql --insecure --execute="$(shell cat ./db/del_admin.sql)"
 
 help:
 	$(info targets are:)

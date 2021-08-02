@@ -3,24 +3,63 @@ package model
 import (
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
-func TestCreateTask(t *testing.T) {
-	var mock sqlmock.Sqlmock
-	var err error
-	db, mock, err = sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
+type fakeTaskDynamoDB struct {
+	dynamodbiface.DynamoDBAPI
+}
+
+func (d *fakeTaskDynamoDB) PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
+	return &dynamodb.PutItemOutput{}, nil
+}
+
+func (d *fakeTaskDynamoDB) GetItem(*dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
 
 	name := "alice"
 	taskType := "basic"
 	status := "new"
 	userID := "test-user-id"
+	id := "an-id"
 
-	mock.ExpectPrepare("INSERT INTO TASK").ExpectExec().WithArgs(sqlmock.AnyArg(), name, taskType, userID).WillReturnResult(sqlmock.NewResult(0, 1))
+	return &dynamodb.GetItemOutput{
+		Item: map[string]*dynamodb.AttributeValue{
+			"id": {
+				S: aws.String(id),
+			},
+			"userId": {
+				S: aws.String(userID),
+			},
+			"taskType": {
+				S: aws.String(taskType),
+			},
+			"status": {
+				S: aws.String(status),
+			},
+			"name": {
+				S: aws.String(name),
+			},
+		}}, nil
+}
+
+func (d *fakeTaskDynamoDB) UpdateItem(*dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
+	return &dynamodb.UpdateItemOutput{}, nil
+}
+
+func (d *fakeTaskDynamoDB) DeleteItem(*dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
+	return &dynamodb.DeleteItemOutput{}, nil
+}
+
+func TestCreateTask(t *testing.T) {
+
+	db = &fakeTaskDynamoDB{}
+
+	name := "alice"
+	taskType := "basic"
+	status := "new"
+	userID := "test-user-id"
 
 	ta := CockroachTaskAccess{}
 	task := Task{Name: name, TaskType: taskType, Status: status, UserID: userID}
@@ -40,22 +79,13 @@ func TestCreateTask(t *testing.T) {
 }
 
 func TestGetTask(t *testing.T) {
-	var mock sqlmock.Sqlmock
-	var err error
-	db, mock, err = sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
+	db = &fakeTaskDynamoDB{}
 
 	name := "alice"
 	taskType := "basic"
 	status := "new"
 	userID := "test-user-id"
 	id := "an-id"
-
-	columns := []string{"id", "name", "email", "hash", "status"}
-	mock.ExpectQuery("select id, name, type, status, user_id from task").WithArgs(id, userID).WillReturnRows(sqlmock.NewRows(columns).AddRow(id, name, taskType, status, userID))
 
 	ta := CockroachTaskAccess{}
 	returnedTask, err := ta.Get(id, userID)
@@ -76,20 +106,13 @@ func TestGetTask(t *testing.T) {
 }
 
 func TestUpdateTask(t *testing.T) {
-	var mock sqlmock.Sqlmock
-	var err error
-	db, mock, err = sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
+	db = &fakeTaskDynamoDB{}
 
 	name := "alice"
 	taskType := "basic"
 	status := "new"
 	userID := "test-user-id"
 	id := "an-id"
-	mock.ExpectPrepare("UPDATE TASK SET name").ExpectExec().WithArgs(name, taskType, status, id, userID).WillReturnResult(sqlmock.NewResult(0, 1))
 
 	task := Task{ID: id, Name: name, TaskType: taskType, Status: status, UserID: userID}
 	ta := CockroachTaskAccess{}
@@ -99,17 +122,10 @@ func TestUpdateTask(t *testing.T) {
 }
 
 func TestDeleteTask(t *testing.T) {
-	var mock sqlmock.Sqlmock
-	var err error
-	db, mock, err = sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
+	db = &fakeTaskDynamoDB{}
 
 	userID := "test-user-id"
 	id := "an-id"
-	mock.ExpectPrepare("DELETE FROM TASK").ExpectExec().WithArgs(id, userID).WillReturnResult(sqlmock.NewResult(0, 1))
 
 	ta := CockroachTaskAccess{}
 

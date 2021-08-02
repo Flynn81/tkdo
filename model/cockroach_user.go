@@ -1,12 +1,14 @@
 package model
 
 import (
-	"fmt"
-
 	"go.uber.org/zap"
 
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	// "github.com/google/uuid"
 )
 
 //CockroachUserAccess is a concrete struct implementing UserAccess, backed by CockroachDB
@@ -15,64 +17,58 @@ type CockroachUserAccess struct {
 
 //Get returns a user given an email address
 func (ua CockroachUserAccess) Get(email string) (*User, error) {
-	rows, err := db.Query("select id, name, email, hash, status from task_user where email = $1", email)
+
+	output, err := db.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String("user"),
+		Key: map[string]*dynamodb.AttributeValue{
+			"email": {
+				S: aws.String(email),
+			},
+		},
+	})
+
 	if err != nil {
 		zap.S().Infof("%e", err)
 		return nil, err
 	}
-	defer closeRows(rows)
-	var (
-		i, n, e, s string
-	)
-	var h []byte
-	if rows.Next() {
-		err := rows.Scan(&i, &n, &e, &h, &s)
-		if err != nil {
-			zap.S().Infof("%e", err)
-			return nil, err
-		}
-		return &User{i, n, e, h, s}, nil
+
+	if output.Item == nil {
+		zap.S().Infof("could not find user for %v", email)
+		return nil, nil
 	}
-	return nil, fmt.Errorf("user with email %v cannot be found", email)
+
+	user := User{}
+
+	err = dynamodbattribute.UnmarshalMap(output.Item, &user)
+
+	if err != nil {
+		zap.S().Infof("%e", err)
+		return nil, err
+	}
+
+	return &user, nil
+
 }
 
 //Create takes a user without an id and persists it
 func (ua CockroachUserAccess) Create(u *User) *User {
-	stmt, err := db.Prepare("INSERT INTO TASK_USER (id, name, email, status) VALUES ($1, $2, $3, $4)")
+	u.ID = uuid.NewString()
+	av, err := dynamodbattribute.MarshalMap(&u)
+	if err != nil {
+		zap.S().Infof("%e", err)
+		return nil
+	}
+	tableName := "user"
+	input := &dynamodb.PutItemInput{
+		Item:      av,
+		TableName: aws.String(tableName),
+	}
 
+	_, err = db.PutItem(input)
 	if err != nil {
 		zap.S().Infof("%e", err)
 		return nil
 	}
-	_, err = stmt.Exec(uuid.NewString(), u.Name, u.Email, u.Status)
-	if err != nil {
-		zap.S().Infof("%e", err)
-		return nil
-	}
-	createdUser, err := ua.Get(u.Email)
-	if err != nil {
-		zap.S().Infof("%e", err)
-		return nil
-	}
-	return createdUser
-}
+	return u
 
-//UpdatePassword takes a task and attempt to update it
-func (ua CockroachUserAccess) UpdatePassword(i string, p string) bool {
-	stmt, err := db.Prepare("UPDATE TASK_USER SET hash=$1 WHERE id = $2")
-	if err != nil {
-		zap.S().Infof("%e", err)
-		return false
-	}
-	h, err := bcrypt.GenerateFromPassword([]byte(p), 14)
-	if err != nil {
-		zap.S().Infof("%e", err)
-		return false
-	}
-	_, err = stmt.Exec(h, i)
-	if err != nil {
-		zap.S().Infof("%e", err)
-		return false
-	}
-	return true
 }
