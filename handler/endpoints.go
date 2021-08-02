@@ -220,6 +220,7 @@ func (sh ListHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 func listTasks(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
+	zap.S().Info("making a list request from the handler")
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
 		page = 0

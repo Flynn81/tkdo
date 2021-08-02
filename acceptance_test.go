@@ -127,8 +127,8 @@ func getBackTheUserISentWithAnId() error {
 	if err != nil {
 		return fmt.Errorf("error decoding response, %e, response content length %d, response code %d ", err, resp.ContentLength, resp.StatusCode)
 	}
-	if user.ID == "" {
-		return fmt.Errorf("user id returned was empty")
+	if user.Email == "" {
+		return fmt.Errorf("email returned was empty")
 	}
 	return nil
 }
@@ -150,8 +150,10 @@ func iGetBackAnEmptyArray() error {
 	if err != nil {
 		return fmt.Errorf("error decoding response, %e", err)
 	}
-	if tasks == nil || len(tasks) > 0 {
-		return fmt.Errorf("tasks is nil or len > 0")
+	if tasks == nil {
+		return fmt.Errorf("tasks is nil")
+	} else if len(tasks) > 0 {
+		return fmt.Errorf("tasks len > 0")
 	}
 	return nil
 }
