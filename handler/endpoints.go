@@ -235,7 +235,8 @@ func listTasks(rw http.ResponseWriter, r *http.Request, ta model.TaskAccess) {
 	bytes, err := json.Marshal(tasks)
 
 	if err != nil {
-		http.Error(rw, "error with search", http.StatusBadRequest)
+		zap.S().Infof("error with listing tasks, %e", err)
+		http.Error(rw, "error with listing tasks", http.StatusBadRequest)
 		return
 	}
 
