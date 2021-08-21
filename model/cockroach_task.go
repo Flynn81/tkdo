@@ -201,20 +201,20 @@ func getPageOfTasks(page int, pageSize int, already int, params *dynamodb.ScanIn
 	//else try and get the data
 	//	if pagesize is not met, call again
 
-		//try and get the data
-		for index, i := range result.Items {
-			if index+already >= (page-1)*pageSize + len(r) {
-				t := Task{}
-				err = dynamodbattribute.UnmarshalMap(i, &t)
-				if err != nil {
-					zap.S().Infof("%e", err)
-					return nil
-				}
-				r = append(r, &t)
-				if len(r) == pageSize {
-					return r
-				}
+	//try and get the data
+	for index, i := range result.Items {
+		if index+already >= (page-1)*pageSize+len(r) {
+			t := Task{}
+			err = dynamodbattribute.UnmarshalMap(i, &t)
+			if err != nil {
+				zap.S().Infof("%e", err)
+				return nil
 			}
+			r = append(r, &t)
+			if len(r) == pageSize {
+				return r
+			}
+		}
 		//if pagesize is not met, call again
 	}
 	if len(result.LastEvaluatedKey) == 0 {
