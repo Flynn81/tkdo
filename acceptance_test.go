@@ -365,7 +365,7 @@ func allTwentyTasksAreReturned() error {
 	if tasks == nil {
 		return fmt.Errorf("tasks is nil")
 	} else if len(tasks) != 20 {
-		return fmt.Errorf("tasks len != 20, actual len is %v", len(tasks))
+		return fmt.Errorf("tasks len != 20, actual len is %d", len(tasks))
 	}
 	return nil
 }
@@ -379,7 +379,7 @@ func onlyFiveTasksAreReturned() error {
 	if tasks == nil {
 		return fmt.Errorf("tasks is nil")
 	} else if len(tasks) != 5 {
-		return fmt.Errorf("tasks len != 5, actual len is %v", len(tasks))
+		return fmt.Errorf("tasks len != 5, actual len is %d, user id is %v", len(tasks), userID)
 	}
 	return nil
 }

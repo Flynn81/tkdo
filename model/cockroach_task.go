@@ -55,6 +55,7 @@ func (ta CockroachTaskAccess) Create(t *Task) *Task {
 	//t.ID = t.Name + t.UserID + strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)
 	t.ID = uuid.NewString()
 	//TODO: set an id in t
+	zap.S().Infof("creating a new task for user ID %v", t.UserID)
 	av, err := dynamodbattribute.MarshalMap(&t)
 	if err != nil {
 		zap.S().Infof("%e", err)
@@ -186,11 +187,42 @@ func (ta CockroachTaskAccess) GetMany(keyword string, taskType string, userID st
 	return r
 }
 
+func getPageOfTasks(page int, pageSize int, currentPage int, params *dynamodb.ScanInput) []*Task {
+	result, err := db.Scan(params)
+	if err != nil {
+		zap.S().Infof("%e", err)
+		return nil
+	}
+
+	//zap.S().Info(result.LastEvaluatedKey)
+
+	if len(result.Items) <= pageSize*page || currentPage == page || len(result.LastEvaluatedKey) == 0 {
+		var r = []*Task{}
+
+		zap.S().Infof("return size %v, last evaluated key: %v", len(result.Items), result.LastEvaluatedKey)
+
+		for _, i := range result.Items {
+			t := Task{}
+			err = dynamodbattribute.UnmarshalMap(i, &t)
+			if err != nil {
+				zap.S().Infof("%e", err)
+				return nil
+			}
+			r = append(r, &t)
+		}
+		return r
+	}
+
+	params.ExclusiveStartKey = result.LastEvaluatedKey
+
+	return getPageOfTasks(page, pageSize, currentPage+1, params)
+}
+
 //List returns a list of tasks
 func (ta CockroachTaskAccess) List(page int, pageSize int, userID string) []*Task {
 	zap.S().Info("making a list request")
+	zap.S().Infof("page, pageSize, userID: %v, %v, %v", page, pageSize, userID)
 
-	//TODO: smarter expression to do paging in the request to dynamodb
 	tableName := "task"
 	filt := expression.Name("userId").Equal(expression.Value(userID))
 
@@ -210,22 +242,5 @@ func (ta CockroachTaskAccess) List(page int, pageSize int, userID string) []*Tas
 		TableName:                 aws.String(tableName),
 	}
 
-	result, err := db.Scan(params)
-	if err != nil {
-		zap.S().Infof("%e", err)
-		return nil
-	}
-
-	var r = []*Task{}
-
-	for _, i := range result.Items {
-		t := Task{}
-		err = dynamodbattribute.UnmarshalMap(i, &t)
-		if err != nil {
-			zap.S().Infof("%e", err)
-			return nil
-		}
-		r = append(r, &t)
-	}
-	return r
+	return getPageOfTasks(page, pageSize, 1, params)
 }
