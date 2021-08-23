@@ -187,7 +187,7 @@ func (ta CockroachTaskAccess) GetMany(keyword string, taskType string, userID st
 	return r
 }
 
-func getPageOfTasks(page int, pageSize int, currentPage int, params *dynamodb.ScanInput) []*Task {
+func getPageOfTasks(page int, pageSize int, already int, params *dynamodb.ScanInput, r []*Task) []*Task {
 	result, err := db.Scan(params)
 	if err != nil {
 		zap.S().Infof("%e", err)
@@ -196,26 +196,62 @@ func getPageOfTasks(page int, pageSize int, currentPage int, params *dynamodb.Sc
 
 	//zap.S().Info(result.LastEvaluatedKey)
 
-	if len(result.Items) <= pageSize*page || currentPage == page || len(result.LastEvaluatedKey) == 0 {
-		var r = []*Task{}
+	//can we get to our page's data in the results returned?
+	//if not, call again for more
+	//else try and get the data
+	//	if pagesize is not met, call again
 
-		zap.S().Infof("return size %v, last evaluated key: %v", len(result.Items), result.LastEvaluatedKey)
-
-		for _, i := range result.Items {
-			t := Task{}
-			err = dynamodbattribute.UnmarshalMap(i, &t)
-			if err != nil {
-				zap.S().Infof("%e", err)
-				return nil
+		//try and get the data
+		for index, i := range result.Items {
+			if index+already >= (page-1)*pageSize + len(r) {
+				t := Task{}
+				err = dynamodbattribute.UnmarshalMap(i, &t)
+				if err != nil {
+					zap.S().Infof("%e", err)
+					return nil
+				}
+				r = append(r, &t)
+				if len(r) == pageSize {
+					return r
+				}
 			}
-			r = append(r, &t)
-		}
+		//if pagesize is not met, call again
+	}
+	if len(result.LastEvaluatedKey) == 0 {
 		return r
 	}
-
+	zap.S().Info("having to get another result set")
 	params.ExclusiveStartKey = result.LastEvaluatedKey
-
-	return getPageOfTasks(page, pageSize, currentPage+1, params)
+	return getPageOfTasks(page, pageSize, already+len(result.Items), params, r)
+	//are we on a page that is equal to or greater than the requested page?
+	//	yes? collect up to pagesize results
+	//		if pagesize results are not met, call method again with currentPage + 1
+	//	no?	call again with currentPage + 1
+	//
+	//
+	// if (len(result.Items) <= pageSize*page || len(result.LastEvaluatedKey) == 0) && currentPage >= page {
+	// 	var r = []*Task{}
+	//
+	// 	zap.S().Infof("return size %v, last evaluated key: %v", len(result.Items), result.LastEvaluatedKey)
+	//
+	// 	for _, i := range result.Items {
+	// 		t := Task{}
+	// 		err = dynamodbattribute.UnmarshalMap(i, &t)
+	// 		if err != nil {
+	// 			zap.S().Infof("%e", err)
+	// 			return nil
+	// 		}
+	// 		r = append(r, &t)
+	// 		if len(r) == pageSize {
+	// 			return r
+	// 		}
+	// 	}
+	// 	return r
+	// }
+	//
+	// params.ExclusiveStartKey = result.LastEvaluatedKey
+	//
+	// return getPageOfTasks(page, pageSize, currentPage+1, params)
 }
 
 //List returns a list of tasks
@@ -242,5 +278,7 @@ func (ta CockroachTaskAccess) List(page int, pageSize int, userID string) []*Tas
 		TableName:                 aws.String(tableName),
 	}
 
-	return getPageOfTasks(page, pageSize, 1, params)
+	var r = []*Task{}
+
+	return getPageOfTasks(page, pageSize, 0, params, r)
 }

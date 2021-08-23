@@ -17,6 +17,7 @@ import (
 var resp *http.Response
 var userID string
 var savedTasks []model.Task
+var secondSavedTasks []model.Task
 
 func makeDeleteRequest(endpoint string, includeUserID bool) error {
 	host := os.Getenv(envHost)
@@ -371,15 +372,14 @@ func allTwentyTasksAreReturned() error {
 }
 
 func onlyFiveTasksAreReturned() error {
-	var tasks []model.Task
-	err := json.NewDecoder(resp.Body).Decode(&tasks)
+	err := json.NewDecoder(resp.Body).Decode(&secondSavedTasks)
 	if err != nil {
 		return fmt.Errorf("error decoding response, %e", err)
 	}
-	if tasks == nil {
+	if secondSavedTasks == nil {
 		return fmt.Errorf("tasks is nil")
-	} else if len(tasks) != 5 {
-		return fmt.Errorf("tasks len != 5, actual len is %d, user id is %v", len(tasks), userID)
+	} else if len(secondSavedTasks) != 5 {
+		return fmt.Errorf("tasks len != 5, actual len is %d, user id is %v", len(secondSavedTasks), userID)
 	}
 	return nil
 }
@@ -398,20 +398,15 @@ func savesTheReturnedRequests() error {
 }
 
 func theFiveTasksAreDifferentFromTheFirstFive() error {
-	var tasks []model.Task
-	err := json.NewDecoder(resp.Body).Decode(&tasks)
-	if err != nil {
-		return fmt.Errorf("error decoding response, %e", err)
-	}
-	if tasks == nil {
+	if secondSavedTasks == nil {
 		return fmt.Errorf("tasks is nil")
-	} else if len(tasks) != 5 {
-		return fmt.Errorf("tasks len != 5, actual len is %v", len(tasks))
+	} else if len(secondSavedTasks) != 5 {
+		return fmt.Errorf("tasks len != 5, actual len is %v", len(secondSavedTasks))
 	}
-	for _, new := range tasks {
+	for _, new := range secondSavedTasks {
 		for _, saved := range savedTasks {
 			if new.Name == saved.Name {
-				return fmt.Errorf("second page contained duplicate task")
+				return fmt.Errorf("second page contained duplicate task, %v == %v, 1st size: %v, 2nd size: %v", new.Name, saved.Name, len(savedTasks), len(secondSavedTasks))
 			}
 		}
 	}
@@ -438,7 +433,7 @@ func theUserCreatesTwentyTasks() error {
 }
 
 func thenRequestsASecondPageOfTasksWithPageSizeOfFive() error {
-	return makeGetRequest("tasks?page=1&page_size=5", true)
+	return makeGetRequest("tasks?page=2&page_size=5", true)
 }
 
 func thenRequestsTheirTasksWithPageSizeOfFifty() error {
@@ -450,7 +445,7 @@ func thenRequestsTheirTasksWithPageSizeOfFive() error {
 }
 
 func thenRequestsTheirTasksWithPageSizeOfFiveAndPageFive() error {
-	return makeGetRequest("tasks?page=4&page_size=5", true)
+	return makeGetRequest("tasks?page=5&page_size=5", true)
 }
 
 func zeroTasksAreReturned() error {
@@ -462,7 +457,7 @@ func zeroTasksAreReturned() error {
 	if tasks == nil {
 		return fmt.Errorf("tasks is nil")
 	} else if len(tasks) > 0 {
-		return fmt.Errorf("tasks len > 0")
+		return fmt.Errorf("tasks len > 0, len is %v", len(tasks))
 	}
 	return nil
 }
