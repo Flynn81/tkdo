@@ -462,7 +462,7 @@ func zeroTasksAreReturned() error {
 	if tasks == nil {
 		return fmt.Errorf("tasks is nil")
 	} else if len(tasks) > 0 {
-		return fmt.Errorf("tasks len > 0")
+		return fmt.Errorf("tasks len > 0, len is %v", len(tasks))
 	}
 	return nil
 }
