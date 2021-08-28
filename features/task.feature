@@ -45,3 +45,34 @@ Feature: tasks
     And the user creates multiple tasks
     And then requests their tasks
     Then multiple tasks are returned
+
+  Scenario: Requesting a page of tasks
+    Given the api is up
+    When a user is created
+    And the user creates twenty tasks
+    And then requests their tasks with page size of five
+    Then only five tasks are returned
+
+  Scenario: Requesting a second page of tasks
+    Given the api is up
+    When a user is created
+    And the user creates twenty tasks
+    And then requests their tasks with page size of five
+    And saves the returned requests
+    And then requests a second page of tasks with page size of five
+    Then only five tasks are returned
+    And the five tasks are different from the first five
+
+  Scenario: Requesting a page of tasks with page size greater than available tasks
+    Given the api is up
+    When a user is created
+    And the user creates twenty tasks
+    And then requests their tasks with page size of fifty
+    Then all twenty tasks are returned
+
+  Scenario: Requesting a page of tasks beyond what is available
+    Given the api is up
+    When a user is created
+    And the user creates twenty tasks
+    And then requests their tasks with page size of five and page five
+    Then zero tasks are returned

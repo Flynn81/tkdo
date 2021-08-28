@@ -16,6 +16,8 @@ import (
 
 var resp *http.Response
 var userID string
+var savedTasks []model.Task
+var secondSavedTasks []model.Task
 
 func makeDeleteRequest(endpoint string, includeUserID bool) error {
 	host := os.Getenv(envHost)
@@ -355,6 +357,111 @@ func thenRequestsTheirTasks() error {
 	return makeGetRequest("tasks", true)
 }
 
+func allTwentyTasksAreReturned() error {
+	var tasks []model.Task
+	err := json.NewDecoder(resp.Body).Decode(&tasks)
+	if err != nil {
+		return fmt.Errorf("error decoding response, %e", err)
+	}
+	if tasks == nil {
+		return fmt.Errorf("tasks is nil")
+	} else if len(tasks) != 20 {
+		return fmt.Errorf("tasks len != 20, actual len is %d", len(tasks))
+	}
+	return nil
+}
+
+func onlyFiveTasksAreReturned() error {
+	err := json.NewDecoder(resp.Body).Decode(&secondSavedTasks)
+	if err != nil {
+		return fmt.Errorf("error decoding response, %e", err)
+	}
+	if secondSavedTasks == nil {
+		return fmt.Errorf("tasks is nil")
+	} else if len(secondSavedTasks) != 5 {
+		return fmt.Errorf("tasks len != 5, actual len is %d, user id is %v", len(secondSavedTasks), userID)
+	}
+	return nil
+}
+
+func savesTheReturnedRequests() error {
+	err := json.NewDecoder(resp.Body).Decode(&savedTasks)
+	if err != nil {
+		return fmt.Errorf("error decoding response, %e", err)
+	}
+	if savedTasks == nil {
+		return fmt.Errorf("tasks is nil")
+	} else if len(savedTasks) == 0 {
+		return fmt.Errorf("tasks len = 0")
+	}
+	return nil
+}
+
+func theFiveTasksAreDifferentFromTheFirstFive() error {
+	if secondSavedTasks == nil {
+		return fmt.Errorf("tasks is nil")
+	} else if len(secondSavedTasks) != 5 {
+		return fmt.Errorf("tasks len != 5, actual len is %v", len(secondSavedTasks))
+	}
+	for _, new := range secondSavedTasks {
+		for _, saved := range savedTasks {
+			if new.Name == saved.Name {
+				return fmt.Errorf("second page contained duplicate task, %v == %v, 1st size: %v, 2nd size: %v", new.Name, saved.Name, len(savedTasks), len(secondSavedTasks))
+			}
+		}
+	}
+	return nil
+}
+
+func theUserCreatesTwentyTasks() error {
+	var user model.User
+	err := json.NewDecoder(resp.Body).Decode(&user)
+	if err != nil {
+		return fmt.Errorf("error decoding response, %e, response content length %d, response code %d ", err, resp.ContentLength, resp.StatusCode)
+	}
+
+	userID = user.ID
+
+	for i := 0; i < 20; i++ {
+		task := model.Task{Name: "new task " + strconv.Itoa(i), TaskType: "basic"}
+		err := makePostRequest("tasks", true, task)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func thenRequestsASecondPageOfTasksWithPageSizeOfFive() error {
+	return makeGetRequest("tasks?page=2&page_size=5", true)
+}
+
+func thenRequestsTheirTasksWithPageSizeOfFifty() error {
+	return makeGetRequest("tasks?page_size=50", true)
+}
+
+func thenRequestsTheirTasksWithPageSizeOfFive() error {
+	return makeGetRequest("tasks?page_size=5", true)
+}
+
+func thenRequestsTheirTasksWithPageSizeOfFiveAndPageFive() error {
+	return makeGetRequest("tasks?page=5&page_size=5", true)
+}
+
+func zeroTasksAreReturned() error {
+	var tasks []model.Task
+	err := json.NewDecoder(resp.Body).Decode(&tasks)
+	if err != nil {
+		return fmt.Errorf("error decoding response, %e", err)
+	}
+	if tasks == nil {
+		return fmt.Errorf("tasks is nil")
+	} else if len(tasks) > 0 {
+		return fmt.Errorf("tasks len > 0, len is %v", len(tasks))
+	}
+	return nil
+}
+
 func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^a (\d+) response code is returned And there is no body$`, aResponseCodeIsReturnedAndThereIsNoBody)
 	ctx.Step(`^a task is created$`, aTaskIsCreated)
@@ -378,4 +485,14 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the user deletes the task$`, theUserDeletesTheTask)
 	ctx.Step(`^the user updates the task$`, theUserUpdatesTheTask)
 	ctx.Step(`^then requests their tasks$`, thenRequestsTheirTasks)
+	ctx.Step(`^all twenty tasks are returned$`, allTwentyTasksAreReturned)
+	ctx.Step(`^only five tasks are returned$`, onlyFiveTasksAreReturned)
+	ctx.Step(`^saves the returned requests$`, savesTheReturnedRequests)
+	ctx.Step(`^the five tasks are different from the first five$`, theFiveTasksAreDifferentFromTheFirstFive)
+	ctx.Step(`^the user creates twenty tasks$`, theUserCreatesTwentyTasks)
+	ctx.Step(`^then requests a second page of tasks with page size of five$`, thenRequestsASecondPageOfTasksWithPageSizeOfFive)
+	ctx.Step(`^then requests their tasks with page size of fifty$`, thenRequestsTheirTasksWithPageSizeOfFifty)
+	ctx.Step(`^then requests their tasks with page size of five$`, thenRequestsTheirTasksWithPageSizeOfFive)
+	ctx.Step(`^then requests their tasks with page size of five and page five$`, thenRequestsTheirTasksWithPageSizeOfFiveAndPageFive)
+	ctx.Step(`^zero tasks are returned$`, zeroTasksAreReturned)
 }
