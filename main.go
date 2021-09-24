@@ -24,6 +24,7 @@ const (
 	envUser   = "TKDO_USER"
 	envDbName   = "TKDO_DBNAME"
 	defaultPort = "7056"
+	envEnv = "TKDO_ENV" //mock|aws
 )
 
 func main() {
@@ -34,14 +35,6 @@ func main() {
 	defer undo()
 
 	zap.S().Info("Server startup")
-
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
-
-	// Create DynamoDB client
-	svc := dynamodb.New(sess, &aws.Config{Endpoint: aws.String("http://localhost:8000")})
-
 	// - TKDO_HOST
 	// - TKDO_PORT
 	// - TKDO_USER
@@ -56,14 +49,30 @@ func main() {
 	dbPort := os.Getenv(envDbPort)
 	user := os.Getenv(envUser)
 	dbname := os.Getenv(envDbName)
+	env := os.Getenv(envEnv)
 	zap.S().Infof("%s:%s", envHost, host)
 	zap.S().Infof("%s:%s", envPort, port)
 	zap.S().Infof("%s:%s", envDbPort, dbPort)
 	zap.S().Infof("%s:%s", envUser, user)
 	zap.S().Infof("%s:%s", envDbName, dbname)
+	zap.S().Infof("%s:%s", envEnv, env)
 
+	if env == "" {
+		env = "aws"
+	}
+
+	if env == "aws" {
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+
+	// Create DynamoDB client
+	svc := dynamodb.New(sess, &aws.Config{Endpoint: aws.String("http://localhost:8000")})
 
 	model.Init(svc)
+} else if env == "mock" {
+	
+}
 
 	argsWithoutProg := os.Args[1:]
 	if len(argsWithoutProg) == 3 && argsWithoutProg[0] == "admin" {
