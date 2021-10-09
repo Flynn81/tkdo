@@ -23,6 +23,9 @@ unitTest:
 coverage: unitTest
 	go tool cover -html=coverage.out
 
+zip:
+	zip -r source.zip */*.go ./*.go
+
 godog:
 ifndef TKDO_HOST
 	$(error TKDO_HOST is not set)
