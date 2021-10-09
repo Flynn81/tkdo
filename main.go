@@ -18,12 +18,13 @@ import (
 )
 
 const (
-	envHost   = "TKDO_HOST"
-	envPort   = "TKDO_PORT"
-	envDbPort = "TKDO_DB_PORT"
-	envUser   = "TKDO_USER"
-	envDbName   = "TKDO_DBNAME"
-	defaultPort = "7056"
+	envHost       = "TKDO_HOST"
+	envPort       = "TKDO_PORT"
+	envDbPort     = "TKDO_DB_PORT"
+	envUser       = "TKDO_USER"
+	envDbName     = "TKDO_DBNAME"
+	envDynamoHost = "TKDO_DYNAMOHOST"
+	defaultPort   = "7056"
 )
 
 func main() {
@@ -39,9 +40,6 @@ func main() {
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 
-	// Create DynamoDB client
-	svc := dynamodb.New(sess, &aws.Config{Endpoint: aws.String("http://localhost:8000")})
-
 	// - TKDO_HOST
 	// - TKDO_PORT
 	// - TKDO_USER
@@ -56,12 +54,21 @@ func main() {
 	dbPort := os.Getenv(envDbPort)
 	user := os.Getenv(envUser)
 	dbname := os.Getenv(envDbName)
+	dynamoHost := os.Getenv(envDynamoHost)
 	zap.S().Infof("%s:%s", envHost, host)
 	zap.S().Infof("%s:%s", envPort, port)
 	zap.S().Infof("%s:%s", envDbPort, dbPort)
 	zap.S().Infof("%s:%s", envUser, user)
 	zap.S().Infof("%s:%s", envDbName, dbname)
+	zap.S().Infof("%s:%s", envDynamoHost, dynamoHost)
 
+	if dynamoHost == "" {
+		zap.S().Error("TKDO_DYNAMOHOST not set")
+		panic("TKDO_DYNAMOHOST not set")
+	}
+
+	// Create DynamoDB client
+	svc := dynamodb.New(sess, &aws.Config{Endpoint: aws.String(dynamoHost)})
 
 	model.Init(svc)
 
