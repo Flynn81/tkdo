@@ -26,6 +26,9 @@ coverage: unitTest
 zip:
 	zip -r source.zip */*.go ./*.go
 
+upload: zip
+	aws s3 cp ./source.zip s3://$(TKDO_S3)
+
 godog:
 ifndef TKDO_HOST
 	$(error TKDO_HOST is not set)
