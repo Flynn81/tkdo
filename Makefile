@@ -9,6 +9,22 @@ everything: localBuild benchmarkAll stress
 localBuild: apiDocs tearDownDb database lint unitTest build dredd postman godog run
 	$(info localBuild complete)
 
+docker:
+	$(info building docker image)
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o tkdo
+	docker build -t tkdo:latest -t tkdo:v0.0.1 -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/tkdo:latest -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/tkdo:v0.0.1 .
+
+dockerRun:
+	$(info running docker image)
+	docker run -p ${TKDO_PORT}:${TKDO_PORT} --env TKDO_HOST --env TKDO_PORT --env TKDO_USER --env TKDO_PASSWORD --env TKDO_DBNAME --env TKDO_DYNAMOHOST tkdo:latest
+
+ecrLogin:
+	aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+
+ecrPush: ecrLogin
+	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/tkdo:latest
+	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/tkdo:v0.0.1
+
 lint:
 	$(info running linter)
 	go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.36.0
