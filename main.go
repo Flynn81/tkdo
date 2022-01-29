@@ -98,7 +98,7 @@ func main() {
 	})
 
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
-		rw.WriteHeader(http.StatusNotFound)
+		rw.WriteHeader(http.StatusOK)
 		_, err := fmt.Fprint(rw, "these aren't the droids you're looking for")
 		if err != nil {
 			zap.S().Infof("We are panicked: %e", err)
