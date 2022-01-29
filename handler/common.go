@@ -9,6 +9,17 @@ import (
 	"github.com/Flynn81/tkdo/model"
 )
 
+//CheckCors will check if cors flag is true and if so add CORS headers in the response
+func CheckCors(h http.Handler, cors bool) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if cors {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		}
+		h.ServeHTTP(w, r)
+	})
+}
+
 //CheckMethod takes a slice of strings, which should represent the http
 //request methods that the handler will allow.
 func CheckMethod(h http.Handler, methods ...string) http.Handler {

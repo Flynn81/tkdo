@@ -16,7 +16,7 @@ docker:
 
 dockerRun:
 	$(info running docker image)
-	docker run -p ${TKDO_PORT}:${TKDO_PORT} --env TKDO_HOST --env TKDO_PORT --env TKDO_USER --env TKDO_PASSWORD --env TKDO_DBNAME --env TKDO_DYNAMOHOST tkdo:latest
+	docker run -p ${TKDO_PORT}:${TKDO_PORT} --env TKDO_HOST --env TKDO_PORT --env TKDO_USER --env TKDO_PASSWORD --env TKDO_DBNAME --env TKDO_DYNAMOHOST --env TKDO_CORS tkdo:latest
 
 ecrLogin:
 	aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
@@ -105,12 +105,12 @@ $(COCKROACH):
 	touch ./db/init.local
 
 tearDownDb:
-	rm ./db/init.local
+	rm ./db/init.local || true
 	unset SQL
 	AWS_ACCESS_KEY_ID=X AWS_SECRET_ACCESS_KEY=X aws dynamodb delete-table \
-    --table-name user --region x --endpoint-url http://localhost:8000
+    --table-name user --region x --endpoint-url http://localhost:8000 || true
 	AWS_ACCESS_KEY_ID=X AWS_SECRET_ACCESS_KEY=X aws dynamodb delete-table \
-    --table-name task --region x --endpoint-url http://localhost:8000
+    --table-name task --region x --endpoint-url http://localhost:8000 || true
 	cd db; docker-compose down;
 
 build:
