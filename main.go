@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -25,6 +26,7 @@ const (
 	envDbName     = "TKDO_DBNAME"
 	envDynamoHost = "TKDO_DYNAMOHOST"
 	defaultPort   = "7056"
+	envCors       = "TKDO_CORS"
 )
 
 func main() {
@@ -55,12 +57,14 @@ func main() {
 	user := os.Getenv(envUser)
 	dbname := os.Getenv(envDbName)
 	dynamoHost := os.Getenv(envDynamoHost)
+	cors, _ := strconv.ParseBool(os.Getenv(envCors))
 	zap.S().Infof("%s:%s", envHost, host)
 	zap.S().Infof("%s:%s", envPort, port)
 	zap.S().Infof("%s:%s", envDbPort, dbPort)
 	zap.S().Infof("%s:%s", envUser, user)
 	zap.S().Infof("%s:%s", envDbName, dbname)
 	zap.S().Infof("%s:%s", envDynamoHost, dynamoHost)
+	zap.S().Infof("%s:%t", envCors, cors)
 
 	if dynamoHost == "" {
 		zap.S().Error("TKDO_DYNAMOHOST not set")
@@ -82,22 +86,30 @@ func main() {
 	ua := model.CockroachUserAccess{}
 
 	lh := handler.ListHandler{TaskAccess: ta}
-	http.Handle("/tasks", handler.CheckMethod(handler.CheckHeaders(lh, false), "GET", "POST"))
+	http.Handle("/tasks", handler.CheckCors(handler.CheckMethod(handler.CheckHeaders(lh, false), "GET", "POST"), cors))
 
 	th := handler.TaskHandler{TaskAccess: ta}
-	http.Handle("/tasks/", handler.CheckMethod(handler.CheckHeaders(th, false), "GET", "DELETE", "PUT"))
+	http.Handle("/tasks/", handler.CheckCors(handler.CheckMethod(handler.CheckHeaders(th, false), "GET", "DELETE", "PUT"), cors))
 
 	sh := handler.SearchHandler{TaskAccess: ta}
-	http.Handle("/tasks/search", handler.CheckMethod(handler.CheckHeaders(sh, false), "GET"))
+	http.Handle("/tasks/search", handler.CheckCors(handler.CheckMethod(handler.CheckHeaders(sh, false), "GET"), cors))
 
 	uh := handler.UserHandler{UserAccess: ua}
-	http.Handle("/users", handler.CheckMethod(handler.CheckHeaders(uh, true), "POST"))
+	http.Handle("/users", handler.CheckCors(handler.CheckMethod(handler.CheckHeaders(uh, true), "POST"), cors))
 
 	http.HandleFunc("/hc", func(rw http.ResponseWriter, r *http.Request) {
+		if cors {
+			rw.Header().Set("Access-Control-Allow-Origin", "*")
+			rw.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		}
 		rw.WriteHeader(http.StatusOK)
 	})
 
 	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
+		if cors {
+			rw.Header().Set("Access-Control-Allow-Origin", "*")
+			rw.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		}
 		rw.WriteHeader(http.StatusOK)
 		_, err := fmt.Fprint(rw, "these aren't the droids you're looking for")
 		if err != nil {
