@@ -16,6 +16,8 @@ import (
 
 	"github.com/Flynn81/tkdo/handler"
 	"github.com/Flynn81/tkdo/model"
+
+	"github.com/apex/gateway"
 )
 
 const (
@@ -27,6 +29,7 @@ const (
 	envDynamoHost = "TKDO_DYNAMOHOST"
 	defaultPort   = "7056"
 	envCors       = "TKDO_CORS"
+	envLambda     = "TKDO_LAMBDA"
 )
 
 func main() {
@@ -58,6 +61,7 @@ func main() {
 	dbname := os.Getenv(envDbName)
 	dynamoHost := os.Getenv(envDynamoHost)
 	cors, _ := strconv.ParseBool(os.Getenv(envCors))
+	lambda, _ := strconv.ParseBool(os.Getenv(envLambda))
 	zap.S().Infof("%s:%s", envHost, host)
 	zap.S().Infof("%s:%s", envPort, port)
 	zap.S().Infof("%s:%s", envDbPort, dbPort)
@@ -65,6 +69,7 @@ func main() {
 	zap.S().Infof("%s:%s", envDbName, dbname)
 	zap.S().Infof("%s:%s", envDynamoHost, dynamoHost)
 	zap.S().Infof("%s:%t", envCors, cors)
+	zap.S().Infof("%s:%t", envLambda, lambda)
 
 	if dynamoHost == "" {
 		zap.S().Error("TKDO_DYNAMOHOST not set")
@@ -134,10 +139,18 @@ func main() {
 		)
 	})
 
-	err := http.ListenAndServe(fmt.Sprintf(":%s", port), wrappedH) //todo: make port env var
-	if err != nil {
-		zap.S().Infof("We are panicked: %e", err)
-		panic(err)
+	if !lambda {
+		err := http.ListenAndServe(fmt.Sprintf(":%s", port), wrappedH) //todo: make port env var
+		if err != nil {
+			zap.S().Infof("We are panicked: %e", err)
+			panic(err)
+		}
+	} else {
+		err := gateway.ListenAndServe(fmt.Sprintf(":%s", port), wrappedH) //todo: make port env var
+		if err != nil {
+			zap.S().Infof("We are panicked: %e", err)
+			panic(err)
+		}
 	}
 	zap.S().Info("Server shutdown")
 }

@@ -12,7 +12,7 @@ localBuild: apiDocs tearDownDb database lint unitTest build dredd postman godog 
 docker:
 	$(info building docker image)
 	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o tkdo
-	docker build -t tkdo:latest -t tkdo:v0.0.1 -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/tkdo:latest -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/tkdo:v0.0.1 .
+	docker build -t tkdo:latest -t tkdo:v0.0.2 -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/tkdo:latest -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/tkdo:v0.0.2 .
 
 dockerRun:
 	$(info running docker image)
@@ -23,7 +23,7 @@ ecrLogin:
 
 ecrPush: ecrLogin
 	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/tkdo:latest
-	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/tkdo:v0.0.1
+	docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/tkdo:v0.0.2
 
 lint:
 	$(info running linter)
@@ -39,10 +39,14 @@ unitTest:
 coverage: unitTest
 	go tool cover -html=coverage.out
 
+zipForAws: zip
+	zip -ur source.zip tkdo-for-aws
+
 zip:
+	rm source.zip
 	zip -r source.zip */*.go ./*.go
 
-upload: zip
+upload: zipForAws
 	aws s3 cp ./source.zip s3://$(TKDO_S3)
 
 godog:
@@ -112,6 +116,10 @@ tearDownDb:
 	AWS_ACCESS_KEY_ID=X AWS_SECRET_ACCESS_KEY=X aws dynamodb delete-table \
     --table-name task --region x --endpoint-url http://localhost:8000 || true
 	cd db; docker-compose down;
+
+buildForAws:
+	$(info building for AWS)
+	GOOS=linux go build -o tkdo-for-aws
 
 build:
 	$(info building)

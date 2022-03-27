@@ -32,3 +32,5 @@ results.bin
 db/docker/dynamodb/shared-local-instance.db
 
 source.zip
+
+tkdo-for-aws
