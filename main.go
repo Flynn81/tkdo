@@ -91,22 +91,23 @@ func main() {
 	ua := model.CockroachUserAccess{}
 
 	lh := handler.ListHandler{TaskAccess: ta}
-	http.Handle("/tasks", handler.CheckCors(handler.CheckMethod(handler.CheckHeaders(lh, false), "GET", "POST"), cors))
+	http.Handle("/tasks", handler.CheckCors(handler.CheckMethod(handler.CheckHeaders(lh, false, version), "GET", "POST"), cors))
 
 	th := handler.TaskHandler{TaskAccess: ta}
-	http.Handle("/tasks/", handler.CheckCors(handler.CheckMethod(handler.CheckHeaders(th, false), "GET", "DELETE", "PUT"), cors))
+	http.Handle("/tasks/", handler.CheckCors(handler.CheckMethod(handler.CheckHeaders(th, false, version), "GET", "DELETE", "PUT"), cors))
 
 	sh := handler.SearchHandler{TaskAccess: ta}
-	http.Handle("/tasks/search", handler.CheckCors(handler.CheckMethod(handler.CheckHeaders(sh, false), "GET"), cors))
+	http.Handle("/tasks/search", handler.CheckCors(handler.CheckMethod(handler.CheckHeaders(sh, false, version), "GET"), cors))
 
 	uh := handler.UserHandler{UserAccess: ua}
-	http.Handle("/users", handler.CheckCors(handler.CheckMethod(handler.CheckHeaders(uh, true), "POST"), cors))
+	http.Handle("/users", handler.CheckCors(handler.CheckMethod(handler.CheckHeaders(uh, true, version), "POST"), cors))
 
 	http.HandleFunc("/hc", func(rw http.ResponseWriter, r *http.Request) {
 		if cors {
 			rw.Header().Set("Access-Control-Allow-Origin", "*")
 			rw.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		}
+		rw.Header().Set("version", version)
 		rw.WriteHeader(http.StatusOK)
 	})
 
@@ -115,6 +116,7 @@ func main() {
 			rw.Header().Set("Access-Control-Allow-Origin", "*")
 			rw.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		}
+		rw.Header().Set("version", version)
 		rw.WriteHeader(http.StatusOK)
 		_, err := fmt.Fprint(rw, "these aren't the droids you're looking for")
 		if err != nil {

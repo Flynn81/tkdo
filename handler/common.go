@@ -35,7 +35,7 @@ func CheckMethod(h http.Handler, methods ...string) http.Handler {
 }
 
 //CheckHeaders ensures all requests being handled have the correct headers
-func CheckHeaders(h http.Handler, u bool) http.Handler {
+func CheckHeaders(h http.Handler, u bool, version string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Content-Type") != "application/json; charset=utf-8" {
 			zap.S().Info("content-type not accepted")
@@ -59,7 +59,7 @@ func CheckHeaders(h http.Handler, u bool) http.Handler {
 
 		//write error response
 		//set response status code
-
+		w.Header().Set("version", version)
 		h.ServeHTTP(w, r)
 	})
 }
