@@ -1,6 +1,10 @@
 BIN_DIR := $(GOPATH)/bin
 COCKROACH := ./db/init.local
 
+.PHONY: help
+help:
+	@LC_ALL=C $(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
+
 buildbot: apiDocs lint unitTest build dredd postman godog run
 
 everything: localBuild benchmarkAll stress
@@ -159,14 +163,3 @@ apiDocs:
 #this needs to be tested
 delAdmin:
 	$(info deleting admin users)
-
-help:
-	$(info targets are:)
-	$(info localBuild)
-	$(info lint)
-	$(info build)
-	$(info dredd)
-	$(info postman)
-	$(info run)
-	$(info kill)
-	$(info apiDocs)
