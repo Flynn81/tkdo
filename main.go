@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"reflect"
@@ -70,6 +71,12 @@ func main() {
 	zap.S().Infof("%s:%s", envDynamoHost, dynamoHost)
 	zap.S().Infof("%s:%t", envCors, cors)
 	zap.S().Infof("%s:%t", envLambda, lambda)
+
+	vFile, ev := ioutil.ReadFile("version.txt")
+	if ev != nil {
+		panic("no version!")
+	}
+	version := string(vFile)
 
 	if dynamoHost == "" {
 		zap.S().Error("TKDO_DYNAMOHOST not set")

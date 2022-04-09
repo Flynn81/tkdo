@@ -43,12 +43,21 @@ unitTest:
 coverage: unitTest
 	go tool cover -html=coverage.out
 
-zipForAws: zip
+zipForAws: zip buildforAWs
 	zip -ur source.zip tkdo-for-aws
 
-zip:
+incrementVersion:
+	$(eval foo := $(shell cat version.txt))
+	@echo $(foo)
+	$(eval v := $(shell ./version.sh $(foo) bug))
+	@echo $(v)
+	git tag $(v)
+	@echo $(v) > version.txt
+
+zip: incrementVersion
 	rm source.zip
 	zip -r source.zip */*.go ./*.go
+	zip -ur source.zip version.txt
 
 upload: zipForAws
 	aws s3 cp ./source.zip s3://$(TKDO_S3)
