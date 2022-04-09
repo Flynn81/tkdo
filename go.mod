@@ -12,6 +12,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.1
 	github.com/golangci/golangci-lint v1.36.0 // indirect
 	github.com/google/uuid v1.2.0
+	github.com/gordonklaus/ineffassign v0.0.0-20210914165742-4cc7213b9bc8 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mdempsky/maligned v0.0.0-20210215075342-f0178ee82032 // indirect
 	github.com/mdempsky/unconvert v0.0.0-20200228143138-95ecdbfc0b5f // indirect
