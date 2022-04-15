@@ -32,7 +32,7 @@ ecrPush: ecrLogin
 lint:
 	$(info running linter)
 	go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.36.0
-	golangci-lint run ./... --skip-files acceptance_test.go
+	golangci-lint run ./... --skip-files acceptance_test.go --timeout 5m
 
 running:
 	ps -ef | grep tkdo
@@ -66,7 +66,7 @@ godog:
 ifndef TKDO_HOST
 	$(error TKDO_HOST is not set)
 endif
-	go get github.com/cucumber/godog/cmd/godog
+	go get github.com/cucumber/godog/cmd/godog@v0.12.0
 	godog
 
 benchmarkAll: benchmarkHealthCheck benchmarkCreateUser benchmarkCreateTask benchmarkGetTasks
