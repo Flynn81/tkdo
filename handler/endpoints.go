@@ -30,6 +30,12 @@ func (uh UserHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	newUser := uh.UserAccess.Create(&u)
 
+	if newUser == nil {
+		zap.S().Info("user struct is nil")
+		http.Error(rw, "error with create", http.StatusInternalServerError)
+		return
+	}
+
 	var bytes []byte
 	bytes, err = json.Marshal(newUser)
 	if err != nil {
