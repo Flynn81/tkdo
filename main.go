@@ -80,7 +80,6 @@ func main() {
 
 	if dynamoHost == "" {
 		zap.S().Error("TKDO_DYNAMOHOST not set")
-		panic("TKDO_DYNAMOHOST not set")
 	}
 
 	// Create DynamoDB client
