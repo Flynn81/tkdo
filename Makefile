@@ -22,7 +22,7 @@ dockerRun:
 	$(info running docker image)
 	docker run -p ${TKDO_PORT}:${TKDO_PORT} --env TKDO_HOST --env TKDO_PORT --env TKDO_USER --env TKDO_PASSWORD --env TKDO_DBNAME --env TKDO_DYNAMOHOST --env TKDO_CORS tkdo:latest
 
-dynamo:
+dynamo-prod:
 	aws dynamodb list-tables --region us-east-2
 	aws dynamodb create-table \
     --table-name user \
@@ -34,6 +34,24 @@ dynamo:
         ReadCapacityUnits=10,WriteCapacityUnits=5
 	aws dynamodb create-table \
     --table-name task \
+    --attribute-definitions \
+				AttributeName=id,AttributeType=S \
+    --key-schema \
+				AttributeName=id,KeyType=HASH \
+--provisioned-throughput \
+        ReadCapacityUnits=10,WriteCapacityUnits=5
+
+dynamo-test:
+	aws dynamodb create-table \
+    --table-name test-user \
+    --attribute-definitions \
+				AttributeName=email,AttributeType=S \
+    --key-schema \
+        AttributeName=email,KeyType=HASH \
+--provisioned-throughput \
+        ReadCapacityUnits=10,WriteCapacityUnits=5
+	aws dynamodb create-table \
+    --table-name test-task \
     --attribute-definitions \
 				AttributeName=id,AttributeType=S \
     --key-schema \
