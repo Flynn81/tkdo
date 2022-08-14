@@ -80,7 +80,7 @@ unitTest:
 coverage: unitTest
 	go tool cover -html=coverage.out
 
-zipForAws: zip buildforAWs
+zipForAws: zip buildForAws
 	zip -ur source.zip tkdo-for-aws
 
 incrementVersion:
@@ -98,6 +98,14 @@ zip: incrementVersion
 
 upload: zipForAws
 	aws s3 cp ./source.zip s3://$(TKDO_S3)
+	aws lambda update-function-code \
+    --function-name  tkdo-testbed \
+		--zip-file fileb://source.zip
+
+promote:
+	aws lambda update-function-code \
+    --function-name  tkdo \
+		--zip-file fileb://source.zip
 
 godog:
 ifndef TKDO_HOST
