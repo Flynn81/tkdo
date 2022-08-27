@@ -52,12 +52,14 @@ func (ua CockroachUserAccess) Get(email string) (*User, error) {
 
 //Create takes a user without an id and persists it
 func (ua CockroachUserAccess) Create(u *User) *User {
+	zap.S().Info("UserAccess.Create")
 	u.ID = uuid.NewString()
 	av, err := dynamodbattribute.MarshalMap(&u)
 	if err != nil {
 		zap.S().Infof("%e", err)
 		return nil
 	}
+	zap.S().Info("UserAccess.Create: after marshalmap")
 	tableName := "user"
 	input := &dynamodb.PutItemInput{
 		Item:      av,
@@ -65,6 +67,7 @@ func (ua CockroachUserAccess) Create(u *User) *User {
 	}
 
 	_, err = db.PutItem(input)
+	zap.S().Info("UserAccess.Create: after PutItem")
 	if err != nil {
 		zap.S().Infof("%e", err)
 		return nil

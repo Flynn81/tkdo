@@ -20,6 +20,7 @@ type UserHandler struct {
 }
 
 func (uh UserHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	zap.S().Infof("UserHandler.ServeHTTP(): %v", r.RequestURI)
 	var u model.User
 	err := json.NewDecoder(r.Body).Decode(&u)
 	if err != nil {
