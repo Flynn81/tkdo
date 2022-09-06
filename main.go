@@ -74,6 +74,7 @@ func main() {
 
 	vFile, ev := ioutil.ReadFile("version.txt")
 	if ev != nil {
+		zap.S().Error("no version!")
 		panic("no version!")
 	}
 	version := string(vFile)
@@ -83,7 +84,12 @@ func main() {
 	}
 
 	// Create DynamoDB client
-	svc := dynamodb.New(sess, &aws.Config{Endpoint: aws.String(dynamoHost)})
+	var svc *dynamodb.DynamoDB
+	if dynamoHost != "nil" {
+		svc = dynamodb.New(sess, &aws.Config{Endpoint: aws.String(dynamoHost)})
+	} else {
+		svc = dynamodb.New(sess)
+	}
 
 	model.Init(svc)
 
