@@ -117,7 +117,7 @@ func main() {
 	http.HandleFunc("/hc", func(rw http.ResponseWriter, r *http.Request) {
 		if cors {
 			rw.Header().Set("Access-Control-Allow-Origin", "*")
-			rw.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+			rw.Header().Set("Access-Control-Allow-Headers", "Content-Type, authorization")
 		}
 		rw.Header().Set("version", version)
 		rw.WriteHeader(http.StatusOK)

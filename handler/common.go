@@ -14,7 +14,7 @@ func CheckCors(h http.Handler, cors bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if cors {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization,uid,Content-Type")
 		}
 		h.ServeHTTP(w, r)
 	})
@@ -30,6 +30,10 @@ func CheckMethod(h http.Handler, methods ...string) http.Handler {
 				return
 			}
 		}
+		if r.Method == http.MethodOptions {
+			h.ServeHTTP(w, r)
+			return
+		}
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	})
 }
@@ -37,11 +41,12 @@ func CheckMethod(h http.Handler, methods ...string) http.Handler {
 //CheckHeaders ensures all requests being handled have the correct headers
 func CheckHeaders(h http.Handler, u bool, version string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Content-Type") != "application/json; charset=utf-8" {
-			zap.S().Info("content-type not accepted")
-			http.Error(w, "content-type not accepted", http.StatusBadRequest)
-			return
-		} else if !u && r.Header.Get("uid") == "" { //todo look up valid uids from an in memory cache
+		// if r.Header.Get("Content-Type") != "application/json; charset=utf-8" {
+		// 	zap.S().Info("content-type not accepted")
+		// 	http.Error(w, "content-type not accepted", http.StatusBadRequest)
+		// 	return
+		// } else
+		if !u && r.Header.Get("uid") == "" && r.Method != http.MethodOptions { //todo look up valid uids from an in memory cache
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			w.WriteHeader(http.StatusUnauthorized)
 			bytes, err := json.Marshal(model.Error{Msg: "invalid uid"})
